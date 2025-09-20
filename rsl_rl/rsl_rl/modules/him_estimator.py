@@ -58,10 +58,12 @@ class HIMEstimator(nn.Module):
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
 
     def get_latent(self, obs_history):
+        print("IM IN GET_LATENT")
         vel, z = self.encode(obs_history)
         return vel.detach(), z.detach()
 
     def forward(self, obs_history):
+        # print("ESTM FWD:",obs_history.shape)
         parts = self.encoder(obs_history.detach())
         vel, z = parts[..., :3], parts[..., 3:]
         z = F.normalize(z, dim=-1, p=2)

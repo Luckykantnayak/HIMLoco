@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <xacro:macro name="robot_hardware_ros2_control" params="enable_motors model_identifier">
+
+    <ros2_control name="MuleSystemInterface" type="system">
+      <hardware>
+        <plugin>odrive_hardware_interface/ODriveHardwareInterface</plugin>
+        <param name="enable_motors">$(arg enable_motors)</param>
+      </hardware>
+      
+      <xacro:include filename="$(find mulev3_description)/xacro/models/${model_identifier}.xacro" />
+
+      <xacro:macro name="mule_joint"
+        params="name joint_min joint_max type max_effort actuator_id communication_bus direction 
+        torque_direction joint_zero_offset encoder_zero_offset gear_ratio vel_limit vel_integrator_gain"
+      >
+          <joint name="${name}_joint">
+
+            <!-- command interfaces are defined here  -->
+            <command_interface name="position" />
+            <command_interface name="effort" />
+            <command_interface name="velocity" />
+            <command_interface name="kp" />
+            <command_interface name="kd" />
+            <command_interface name="current_limit" />
+    
+            <!-- state interfaces are defind here -->
+            <state_interface name="position" />
+            <state_interface name="effort" />
+            <state_interface name="velocity" />
+            <state_interface name="mode" />
+            <state_interface name="fault" />
+            <state_interface name="voltage" />
+            <state_interface name="fet_temperature" />
+            <state_interface name="motor_temperature" />
+            <state_interface name="iq" />
+            <state_interface name="disarm_reason" />
+    
+            <!-- min max params are defined here -->
+            <param name="min">${joint_min}</param>
+            <param name="max">${joint_max}</param>
+            <param name="max_effort">${max_effort}</param>
+
+            <!-- type of joint is defined here -->
+            <param name="type">${type}</param>
+             
+            <!-- can bus settings are defined here -->
+            <param name="actuator_id">${actuator_id}</param>
+            <param name="communication_bus">${communication_bus}</param>
+
+            <!-- actuator preferences are defined here -->
+            <param name="direction">${direction}</param>
+            <param name="torque_direction">${torque_direction}</param>
+            <param name="joint_zero_offset">${joint_zero_offset}</param>
+            <param name="encoder_zero_offset">${encoder_zero_offset}</param>
+            <param name="gear_ratio">${gear_ratio}</param>
+            <param name="vel_limit">${vel_limit}</param>
+            <param name="vel_integrator_gain">${vel_integrator_gain}</param>
+          
+          </joint>      
+      </xacro:macro>
+
+      <!-- Front Left -->
+
+      <xacro:mule_joint
+        name="fl_abd"
+        joint_min="${abd_min}" 
+        joint_max="${abd_max}"
+        type="revolute"
+        max_effort="${abd_max_effort}"
+        actuator_id="${fl_abd_actuator_id}"
+        communication_bus="${fl_communication_bus}"
+        direction="${fl_abd_direction}" 
+        torque_direction="${fl_abd_torque_direction}" 
+        joint_zero_offset="${fl_abd_offset}"
+        encoder_zero_offset="${fl_abd_encoder_zero_offset}"
+        gear_ratio="${fl_abd_gear_ratio}" 
+        vel_limit="${fl_abd_vel_limit}" 
+        vel_integrator_gain="${fl_abd_vel_integrator_gain}"
+      />
+
+      <xacro:mule_joint
+        name="fl_hip"
+        joint_min="${hip_min}" 
+        joint_max="${hip_max}"
+        type="revolute"
+        max_effort="${hip_max_effort}"
+        actuator_id="${fl_hip_actuator_id}"
+        communication_bus="${fl_communication_bus}"
+        direction="${fl_hip_direction}" 
+        torque_direction="${fl_hip_torque_direction}" 
+        joint_zero_offset="${fl_hip_offset}"
+        encoder_zero_offset="${fl_hip_encoder_zero_offset}"
+        gear_ratio="${fl_hip_gear_ratio}" 
+        vel_limit="${fl_hip_vel_limit}" 
+        vel_integrator_gain="${fl_hip_vel_integrator_gain}"
+      />
+
+      <xacro:mule_joint
+        name="fl_knee"
+        joint_min="${knee_min}" 
+        joint_max="${knee_max}"
+        type="revolute"
+        max_effort="${knee_max_effort}"
+        actuator_id="${fl_knee_actuator_id}"
+        communication_bus="${fl_communication_bus}"
+        direction="${fl_knee_direction}" 
+        torque_direction="${fl_knee_torque_direction}" 
+        joint_zero_offset="${fl_knee_offset}"
+        encoder_zero_offset="${fl_knee_encoder_zero_offset}"
+        gear_ratio="${fl_knee_gear_ratio}" 
+        vel_limit="${fl_knee_vel_limit}" 
+        vel_integrator_gain="${fl_knee_vel_integrator_gain}"
+      />
+    
+      <!-- Front Right -->
+
+      <xacro:mule_joint
+        name="fr_abd"
+        joint_min="${abd_min}" 
+        joint_max="${abd_max}"
+        type="revolute"
+        max_effort="${abd_max_effort}"
+        actuator_id="${fr_abd_actuator_id}"
+        communication_bus="${fr_communication_bus}"
+        direction="${fr_abd_direction}" 
+        torque_direction="${fr_abd_torque_direction}" 
+        joint_zero_offset="${fr_abd_offset}"
+        encoder_zero_offset="${fr_abd_encoder_zero_offset}"
+        gear_ratio="${fr_abd_gear_ratio}" 
+        vel_limit="${fr_abd_vel_limit}" 
+        vel_integrator_gain="${fr_abd_vel_integrator_gain}"
+      />
+
+      <xacro:mule_joint
+        name="fr_hip"
+        joint_min="${hip_min}" 
+        joint_max="${hip_max}"
+        type="revolute"
+        max_effort="${hip_max_effort}"
+        actuator_id="${fr_hip_actuator_id}"
+        communication_bus="${fr_communication_bus}"
+        direction="${fr_hip_direction}" 
+        torque_direction="${fr_hip_torque_direction}" 
+        joint_zero_offset="${fr_hip_offset}"
+        encoder_zero_offset="${fr_hip_encoder_zero_offset}"
+        gear_ratio="${fr_hip_gear_ratio}" 
+        vel_limit="${fr_hip_vel_limit}" 
+        vel_integrator_gain="${fr_hip_vel_integrator_gain}"
+      />
+
+      <xacro:mule_joint
+        name="fr_knee"
+        joint_min="${knee_min}" 
+        joint_max="${knee_max}"
+        type="revolute"
+        max_effort="${knee_max_effort}"
+        actuator_id="${fr_knee_actuator_id}"
+        communication_bus="${fr_communication_bus}"
+        direction="${fr_knee_direction}" 
+        torque_direction="${fr_knee_torque_direction}" 
+        joint_zero_offset="${fr_knee_offset}"
+        encoder_zero_offset="${fr_knee_encoder_zero_offset}"
+        gear_ratio="${fr_knee_gear_ratio}" 
+        vel_limit="${fr_knee_vel_limit}" 
+        vel_integrator_gain="${fr_knee_vel_integrator_gain}"
+      />
+
+      <!-- Back Left -->
+
+      <xacro:mule_joint
+        name="bl_abd"
+        joint_min="${abd_min}" 
+        joint_max="${abd_max}"
+        type="revolute"
+        max_effort="${abd_max_effort}"
+        actuator_id="${bl_abd_actuator_id}"
+        communication_bus="${bl_communication_bus}"
+        direction="${bl_abd_direction}" 
+        torque_direction="${bl_abd_torque_direction}" 
+        joint_zero_offset="${bl_abd_offset}"
+        encoder_zero_offset="${bl_abd_encoder_zero_offset}"
+        gear_ratio="${bl_abd_gear_ratio}" 
+        vel_limit="${bl_abd_vel_limit}" 
+        vel_integrator_gain="${bl_abd_vel_integrator_gain}"
+      />
+
+      <xacro:mule_joint
+        name="bl_hip"
+        joint_min="${hip_min}" 
+        joint_max="${hip_max}"
+        type="revolute"
+        max_effort="${hip_max_effort}"
+        actuator_id="${bl_hip_actuator_id}"
+        communication_bus="${bl_communication_bus}"
+        direction="${bl_hip_direction}" 
+        torque_direction="${bl_hip_torque_direction}" 
+        joint_zero_offset="${bl_hip_offset}"
+        encoder_zero_offset="${bl_hip_encoder_zero_offset}"
+        gear_ratio="${bl_hip_gear_ratio}" 
+        vel_limit="${bl_hip_vel_limit}" 
+        vel_integrator_gain="${bl_hip_vel_integrator_gain}"
+      />
+
+      <xacro:mule_joint
+        name="bl_knee"
+        joint_min="${knee_min}" 
+        joint_max="${knee_max}"
+        type="revolute"
+        max_effort="${knee_max_effort}"
+        actuator_id="${bl_knee_actuator_id}"
+        communication_bus="${bl_communication_bus}"
+        direction="${bl_knee_direction}" 
+        torque_direction="${bl_knee_torque_direction}" 
+        joint_zero_offset="${bl_knee_offset}"
+        encoder_zero_offset="${bl_knee_encoder_zero_offset}"
+        gear_ratio="${bl_knee_gear_ratio}" 
+        vel_limit="${bl_knee_vel_limit}" 
+        vel_integrator_gain="${bl_knee_vel_integrator_gain}"
+      />
+
+      <!-- Back Right -->
+
+      <xacro:mule_joint
+        name="br_abd"
+        joint_min="${abd_min}" 
+        joint_max="${abd_max}"
+        type="revolute"
+        max_effort="${abd_max_effort}"
+        actuator_id="${br_abd_actuator_id}"
+        communication_bus="${br_communication_bus}"
+        direction="${br_abd_direction}" 
+        torque_direction="${br_abd_torque_direction}" 
+        joint_zero_offset="${br_abd_offset}"
+        encoder_zero_offset="${br_abd_encoder_zero_offset}"
+        gear_ratio="${br_abd_gear_ratio}" 
+        vel_limit="${br_abd_vel_limit}" 
+        vel_integrator_gain="${br_abd_vel_integrator_gain}"
+      />
+
+      <xacro:mule_joint
+        name="br_hip"
+        joint_min="${hip_min}" 
+        joint_max="${hip_max}"
+        type="revolute"
+        max_effort="${hip_max_effort}"
+        actuator_id="${br_hip_actuator_id}"
+        communication_bus="${br_communication_bus}"
+        direction="${br_hip_direction}" 
+        torque_direction="${br_hip_torque_direction}" 
+        joint_zero_offset="${br_hip_offset}"
+        encoder_zero_offset="${br_hip_encoder_zero_offset}"
+        gear_ratio="${br_hip_gear_ratio}" 
+        vel_limit="${br_hip_vel_limit}" 
+        vel_integrator_gain="${br_hip_vel_integrator_gain}"
+      />
+
+      <xacro:mule_joint
+        name="br_knee"
+        joint_min="${knee_min}" 
+        joint_max="${knee_max}"
+        type="revolute"
+        max_effort="${knee_max_effort}"
+        actuator_id="${br_knee_actuator_id}"
+        communication_bus="${br_communication_bus}"
+        direction="${br_knee_direction}" 
+        torque_direction="${br_knee_torque_direction}" 
+        joint_zero_offset="${br_knee_offset}"
+        encoder_zero_offset="${br_knee_encoder_zero_offset}"
+        gear_ratio="${br_knee_gear_ratio}" 
+        vel_limit="${br_knee_vel_limit}" 
+        vel_integrator_gain="${br_knee_vel_integrator_gain}"
+      />
+    </ros2_control> 
+
+    <ros2_control name="BaghiraIMUInterface" type="sensor">
+      <hardware>
+        <plugin>baghira_imu_interface/BaghiraIMUInterface</plugin>
+      </hardware>
+
+      <sensor name="imu_sensor">
+        <state_interface name="orientation.x" />
+        <state_interface name="orientation.y" />
+        <state_interface name="orientation.z" />
+        <state_interface name="orientation.w" />
+        <state_interface name="angular_velocity.x" />
+        <state_interface name="angular_velocity.y" />
+        <state_interface name="angular_velocity.z" />
+        <state_interface name="linear_acceleration.x" />
+        <state_interface name="linear_acceleration.y" />
+        <state_interface name="linear_acceleration.z" />
+      </sensor>
+    </ros2_control>
+
+  </xacro:macro>
+</robot>

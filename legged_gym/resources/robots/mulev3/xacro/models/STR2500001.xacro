@@ -1,0 +1,239 @@
+<?xml version="1_0"?>
+
+<robot xmlns:xacro="http://www_ros_org/wiki/xacro">
+    <!-- min-max section start -->
+
+    <xacro:property name="abd_min" value="-1.5708"/>
+    <xacro:property name="abd_max" value="1.5708"/>
+
+    <xacro:property name="hip_min" value="-1.5708"/>
+    <xacro:property name="hip_max" value="3.14159"/>
+
+    <xacro:property name="knee_min" value="-3.14159"/>
+    <xacro:property name="knee_max" value="0"/>
+
+    <!-- min-max section end -->
+
+    <!-- max effort section start -->
+
+    <xacro:property name="abd_max_effort" value="30"/>
+    <xacro:property name="hip_max_effort" value="30"/>
+    <xacro:property name="knee_max_effort" value="30"/>
+
+    <!-- max effort section end -->
+    
+    <!-- actuator ids start -->
+
+    <!-- fl actuator ids -->
+    <xacro:property name="fl_abd_actuator_id" value="11"/>
+    <xacro:property name="fl_hip_actuator_id" value="12"/>
+    <xacro:property name="fl_knee_actuator_id" value="13"/>
+
+    <!-- fr actuator ids -->
+    <xacro:property name="fr_abd_actuator_id" value="21"/>
+    <xacro:property name="fr_hip_actuator_id" value="22"/>
+    <xacro:property name="fr_knee_actuator_id" value="23"/>
+
+    <!-- bl actuator ids -->
+    <xacro:property name="bl_abd_actuator_id" value="31"/>
+    <xacro:property name="bl_hip_actuator_id" value="32"/>
+    <xacro:property name="bl_knee_actuator_id" value="33"/>
+
+    <!-- br actuator ids -->
+    <xacro:property name="br_abd_actuator_id" value="41"/>
+    <xacro:property name="br_hip_actuator_id" value="42"/>
+    <xacro:property name="br_knee_actuator_id" value="43"/>
+
+    <!-- actuator ids end -->
+
+    <!-- communication buses start -->
+
+    <xacro:property name="fl_communication_bus" value="can0"/>
+    <xacro:property name="fr_communication_bus" value="can1"/>
+    <xacro:property name="bl_communication_bus" value="can2"/>
+    <xacro:property name="br_communication_bus" value="can3"/>
+
+    <!-- communication buses end -->
+
+    <!-- actuator directions start -->
+
+    <!-- fl -->
+    <xacro:property name="fl_abd_direction" value="-1"/>
+    <xacro:property name="fl_hip_direction" value="-1"/>
+    <xacro:property name="fl_knee_direction" value="+1"/>
+
+    <!-- fr -->
+    <xacro:property name="fr_abd_direction" value="-1"/>
+    <xacro:property name="fr_hip_direction" value="+1"/>
+    <xacro:property name="fr_knee_direction" value="-1"/>
+
+    <!-- bl -->
+    <xacro:property name="bl_abd_direction" value="+1"/>
+    <xacro:property name="bl_hip_direction" value="-1"/>
+    <xacro:property name="bl_knee_direction" value="+1"/>
+
+    <!-- br -->
+    <xacro:property name="br_abd_direction" value="+1"/>
+    <xacro:property name="br_hip_direction" value="+1"/>
+    <xacro:property name="br_knee_direction" value="-1"/>
+
+    <!-- actuator directions end -->
+
+    <!-- torque directions start -->
+    
+    <!-- fl -->
+    <xacro:property name="fl_abd_torque_direction" value="-1"/>
+    <xacro:property name="fl_hip_torque_direction" value="-1"/>
+    <xacro:property name="fl_knee_torque_direction" value="-1"/>
+
+    <!-- fr -->
+    <xacro:property name="fr_abd_torque_direction" value="-1"/>
+    <xacro:property name="fr_hip_torque_direction" value="1"/>
+    <xacro:property name="fr_knee_torque_direction" value="+1"/>
+
+    <!-- bl -->
+    <xacro:property name="bl_abd_torque_direction" value="-1"/>
+    <xacro:property name="bl_hip_torque_direction" value="-1"/>
+    <xacro:property name="bl_knee_torque_direction" value="+1"/>
+
+    <!-- br -->
+    <xacro:property name="br_abd_torque_direction" value="1"/>
+    <xacro:property name="br_hip_torque_direction" value="1"/>
+    <xacro:property name="br_knee_torque_direction" value="+1"/>
+
+    <!-- torque directions end -->
+
+    <!-- vel limit start -->
+
+    <!-- fl -->
+    <xacro:property name="fl_abd_vel_limit" value="30.0"/>
+    <xacro:property name="fl_hip_vel_limit" value="30.0"/>
+    <xacro:property name="fl_knee_vel_limit" value="30.0"/>
+
+    <!-- fr -->
+    <xacro:property name="fr_abd_vel_limit" value="30.0"/>
+    <xacro:property name="fr_hip_vel_limit" value="30.0"/>
+    <xacro:property name="fr_knee_vel_limit" value="30.0"/>
+    
+    <!-- bl -->
+    <xacro:property name="bl_abd_vel_limit" value="30.0"/>
+    <xacro:property name="bl_hip_vel_limit" value="30.0"/>
+    <xacro:property name="bl_knee_vel_limit" value="30.0"/>
+    
+    <!-- br -->
+    <xacro:property name="br_abd_vel_limit" value="30.0"/>
+    <xacro:property name="br_hip_vel_limit" value="30.0"/>
+    <xacro:property name="br_knee_vel_limit" value="30.0"/>
+    
+    <!-- vel limit end -->
+
+    <!-- vel integrator gain start -->
+
+    <!-- fl -->
+    <xacro:property name="fl_abd_vel_integrator_gain" value="0.33"/>
+    <xacro:property name="fl_hip_vel_integrator_gain" value="0.33"/>
+    <xacro:property name="fl_knee_vel_integrator_gain" value="0.33"/>
+
+    <!-- fr -->
+    <xacro:property name="fr_abd_vel_integrator_gain" value="0.33"/>
+    <xacro:property name="fr_hip_vel_integrator_gain" value="0.33"/>
+    <xacro:property name="fr_knee_vel_integrator_gain" value="0.33"/>
+    
+    <!-- bl -->
+    <xacro:property name="bl_abd_vel_integrator_gain" value="0.33"/>
+    <xacro:property name="bl_hip_vel_integrator_gain" value="0.33"/>
+    <xacro:property name="bl_knee_vel_integrator_gain" value="0.33"/>
+    
+    <!-- br -->
+    <xacro:property name="br_abd_vel_integrator_gain" value="0.33"/>
+    <xacro:property name="br_hip_vel_integrator_gain" value="0.33"/>
+    <xacro:property name="br_knee_vel_integrator_gain" value="0.33"/>
+
+    <!-- vel integrator gain end -->
+
+    <!-- gear ratio start -->
+
+    <!-- fl -->
+    <xacro:property name="fl_abd_gear_ratio" value="16.0"/>
+    <xacro:property name="fl_hip_gear_ratio" value="16.0"/>
+    <xacro:property name="fl_knee_gear_ratio" value="24.0"/>
+
+    <!-- fr -->
+    <xacro:property name="fr_abd_gear_ratio" value="16.0"/>
+    <xacro:property name="fr_hip_gear_ratio" value="16.0"/>
+    <xacro:property name="fr_knee_gear_ratio" value="24.0"/>
+    
+    <!-- bl -->
+    <xacro:property name="bl_abd_gear_ratio" value="16.0"/>
+    <xacro:property name="bl_hip_gear_ratio" value="16.0"/>
+    <xacro:property name="bl_knee_gear_ratio" value="24.0"/>
+    
+    <!-- br -->
+    <xacro:property name="br_abd_gear_ratio" value="16.0"/>
+    <xacro:property name="br_hip_gear_ratio" value="16.0"/>
+    <xacro:property name="br_knee_gear_ratio" value="24.0"/>
+
+    <!-- gear ratio end -->
+
+    <!-- joint offsets start -->
+
+    <!-- Front Left -->
+
+    <xacro:property name="fl_abd_offset" value="0.195"/>
+
+    <xacro:property name="fl_hip_offset" value="-1.654"/>
+
+    <xacro:property name="fl_knee_offset" value="2.954"/>
+ 
+
+    <!-- Front Right -->
+
+    <xacro:property name="fr_abd_offset" value="-0.176"/>
+
+    <xacro:property name="fr_hip_offset" value="-1.281"/>
+ 
+
+
+    <xacro:property name="fr_knee_offset" value="2.949"/>
+
+
+    <!-- Back Left -->
+ 
+    <!-- <xacro:property name="bl_abd_offset" value="-0.015"/> -->
+    <xacro:property name="bl_abd_offset" value="0.364"/>
+
+
+    <xacro:property name="bl_hip_offset" value="-1.420"/>
+
+    <xacro:property name="bl_knee_offset" value="2.789"/>
+
+    <!-- Back Right -->
+
+    <xacro:property name="br_abd_offset" value="-0.092"/>
+
+    <xacro:property name="br_hip_offset" value="-1.382"/>
+
+    <xacro:property name="br_knee_offset" value="2.794"/>
+    
+    <!-- fl -->
+    <xacro:property name="fl_abd_encoder_zero_offset" value="0.0"/>
+    <xacro:property name="fl_hip_encoder_zero_offset" value="0.0"/>
+    <xacro:property name="fl_knee_encoder_zero_offset" value="0.0"/>
+
+    <!-- fr -->
+    <xacro:property name="fr_abd_encoder_zero_offset" value="0.0"/>
+    <xacro:property name="fr_hip_encoder_zero_offset" value="0.0"/>
+    <xacro:property name="fr_knee_encoder_zero_offset" value="0.0"/>
+    
+    <!-- bl -->
+    <xacro:property name="bl_abd_encoder_zero_offset" value="0.0"/>
+    <xacro:property name="bl_hip_encoder_zero_offset" value="0.0"/>
+    <xacro:property name="bl_knee_encoder_zero_offset" value="0.0"/>
+    
+    <!-- br -->
+    <xacro:property name="br_abd_encoder_zero_offset" value="0.0"/>
+    <xacro:property name="br_hip_encoder_zero_offset" value="0.0"/>
+    <xacro:property name="br_knee_encoder_zero_offset" value="0.0"/>
+    
+    <!-- encoder offsets end -->
+</robot>

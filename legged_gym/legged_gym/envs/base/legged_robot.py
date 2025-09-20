@@ -244,10 +244,12 @@ class LeggedRobot(BaseTask):
     def compute_observations(self):
         """ Computes observations
         """
+        dof_pos_err = self.dof_pos - self.default_dof_pos
+        dof_pos_err[:, self.wheel_indices] = 0.0
         current_obs = torch.cat((   self.commands[:, :3] * self.commands_scale,
                                     self.base_ang_vel  * self.obs_scales.ang_vel,
                                     self.projected_gravity,
-                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+                                    dof_pos_err * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions
                                     ),dim=-1)
@@ -266,10 +268,12 @@ class LeggedRobot(BaseTask):
         self.privileged_obs_buf = torch.cat((current_obs[:, :self.num_one_step_privileged_obs], self.privileged_obs_buf[:, :-self.num_one_step_privileged_obs]), dim=-1)
 
     def get_current_obs(self):
+        dof_pos_err = self.dof_pos - self.default_dof_pos
+        dof_pos_err[:, self.wheel_indices] = 0.0
         current_obs = torch.cat((   self.commands[:, :3] * self.commands_scale,
                                     self.base_ang_vel  * self.obs_scales.ang_vel,
                                     self.projected_gravity,
-                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+                                    dof_pos_err * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions
                                     ),dim=-1)
@@ -488,13 +492,29 @@ class LeggedRobot(BaseTask):
             [torch.Tensor]: Torques sent to the simulation
         """
         #pd controller
-        actions_scaled = actions * self.cfg.control.action_scale
-        actions_scaled[:, [0, 3, 6, 9]] *=self.cfg.control.hip_reduction
-        self.joint_pos_target = self.default_dof_pos + actions_scaled
+        # # self.dof_vel[:, self.wheel_indices] = 0.0
+        # # self.dof_pos[:, self.wheel_indices] = 0.0
+        # actions_scaled = actions * self.cfg.control.action_scale
+        # # actions_scaled[:, [0, 3, 6, 9]] *=self.cfg.control.hip_reduction
+        # self.joint_pos_target = self.default_dof_pos + actions_scaled
 
+        # control_type = self.cfg.control.control_type
+        # if control_type=="P":
+        #     torques = self.p_gains * self.Kp_factors * (self.joint_pos_target - self.dof_pos) - self.d_gains * self.Kd_factors * self.dof_vel
+        #     torques[:, self.wheel_indices] = 0.0
+        #     desired_wheel_vel = actions_scaled[:, self.wheel_indices]   # Output of RL for wheels
+        #     torques[:, self.wheel_indices] = self.p_gains[self.wheel_indices] * (desired_wheel_vel - self.dof_vel[:, self.wheel_indices]) \
+        #                        - self.d_gains[self.wheel_indices] * (self.dof_vel[:, self.wheel_indices] - self.last_dof_vel[:, self.wheel_indices]) / self.sim_params.dt
+
+        dof_err = self.default_dof_pos - self.dof_pos
+        dof_err[:, self.wheel_indices] =  0
+        self.dof_vel[:, self.wheel_indices] =  0.0
+        actions_scaled = actions * self.cfg.control.action_scale
         control_type = self.cfg.control.control_type
+        
         if control_type=="P":
-            torques = self.p_gains * self.Kp_factors * (self.joint_pos_target - self.dof_pos) - self.d_gains * self.Kd_factors * self.dof_vel
+            torques = self.p_gains * (actions_scaled + dof_err) - self.d_gains * self.dof_vel
+            
         elif control_type=="V":
             torques = self.p_gains*(actions_scaled - self.dof_vel) - self.d_gains*(self.dof_vel - self.last_dof_vel)/self.sim_params.dt
         elif control_type=="T":
@@ -512,6 +532,7 @@ class LeggedRobot(BaseTask):
             env_ids (List[int]): Environemnt ids
         """
         self.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=self.device)
+        self.dof_pos[:, self.wheel_indices] = 0.0 # make the initial wheel dof rand 0 as there's no position control for wheels
         self.dof_vel[env_ids] = 0.
 
         env_ids_int32 = env_ids.to(dtype=torch.int32)
@@ -834,6 +855,13 @@ class LeggedRobot(BaseTask):
         for name in self.cfg.asset.terminate_after_contacts_on:
             termination_contact_names.extend([s for s in body_names if name in s])
             
+        wheel_names =[]
+        for name in self.cfg.asset.wheel_name:
+            wheel_names.extend([s for s in self.dof_names if name in s])
+        
+        print("-------wheels names:---------",wheel_names)
+
+            
         self.default_rigid_body_mass = torch.zeros(self.num_bodies, dtype=torch.float, device=self.device, requires_grad=False)
 
         base_init_state_list = self.cfg.init_state.pos + self.cfg.init_state.rot + self.cfg.init_state.lin_vel + self.cfg.init_state.ang_vel
@@ -889,6 +917,11 @@ class LeggedRobot(BaseTask):
         for i in range(len(termination_contact_names)):
             self.termination_contact_indices[i] = self.gym.find_actor_rigid_body_handle(self.envs[0], self.actor_handles[0], termination_contact_names[i])
             
+            
+        self.wheel_indices = torch.zeros(len(wheel_names), dtype=torch.long, device=self.device, requires_grad=False)
+        for i in range(len(wheel_names)):
+            self.wheel_indices[i] = self.gym.find_actor_dof_handle(self.envs[0], self.actor_handles[0], wheel_names[i])
+
 
     def _get_env_origins(self):
         """ Sets environment origins. On rough terrain the origins are defined by the terrain platforms.
@@ -1220,3 +1253,8 @@ class LeggedRobot(BaseTask):
     def _reward_feet_contact_forces(self):
         # penalize high contact forces
         return torch.sum((torch.norm(self.contact_forces[:, self.feet_indices, :], dim=-1) -  self.cfg.rewards.max_contact_force).clip(min=0.), dim=1)
+    
+    def _reward_hip_action_l2(self):
+        action_l2 = torch.sum(self.actions[:, [0, 4, 8, 12]] ** 2, dim=1)
+        #self.episode_metric_sums['leg_action_l2'] += action_l2
+        return action_l2

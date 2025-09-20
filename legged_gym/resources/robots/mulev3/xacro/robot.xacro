@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name = 'mule' xmlns:xacro = 'http://www.ros.org/wiki/xacro'>
+  <xacro:arg name="debug" default="false"/>
+  <xacro:arg name="sim_ros2_control" default="true"/>
+  <xacro:arg name="enable_motors" default="false"/>
+  <xacro:arg name="model_identifier" default="STR2000001"/>
+
+  <xacro:include filename="$(find mulev3_description)/xacro/robot_description.xacro" />
+  <xacro:include filename="$(find mulev3_description)/xacro/materials.xacro" />
+  <xacro:include filename="$(find mulev3_description)/xacro/sensors.xacro" />
+  <xacro:include filename="$(find mulev3_description)/xacro/foot.xacro" />
+  <xacro:if value="$(arg sim_ros2_control)">
+    <xacro:include filename="$(find mulev3_description)/xacro/robot_simulation.ros2_control.xacro" />
+    <xacro:include filename="$(find mulev3_description)/xacro/gazebo.xacro" />
+  </xacro:if>
+  <xacro:unless value="$(arg sim_ros2_control)">
+    <xacro:include filename="$(find mulev3_description)/xacro/robot_hardware.ros2_control.xacro" />
+  </xacro:unless>
+
+  <!-- For defining the links and joints-->
+  <xacro:description/>
+  <xacro:robot_foot leg="fl" />
+  <xacro:robot_foot leg="fr" />
+  <xacro:robot_foot leg="bl" />
+  <xacro:robot_foot leg="br" />
+
+  <!-- To enable/disable motors during runtime -->
+  <xacro:unless value="$(arg sim_ros2_control)">
+  <xacro:robot_hardware_ros2_control enable_motors="$(arg enable_motors)" model_identifier="$(arg model_identifier)"/>
+  </xacro:unless>
+
+
+  <!-- Materials and friction properties-->
+  <xacro:materials name="base_link" color="White"/>
+
+  <xacro:materials name="fl_abd" color="Grey"/>
+  <xacro:materials name="bl_abd" color="Grey"/>
+  <xacro:materials name="fr_abd" color="Grey"/>
+  <xacro:materials name="br_abd" color="Grey"/>
+
+  <xacro:materials name="fl_thigh" color="DarkGrey"/>
+  <xacro:materials name="bl_thigh" color="DarkGrey"/>
+  <xacro:materials name="fr_thigh" color="DarkGrey"/>
+  <xacro:materials name="br_thigh" color="DarkGrey"/>
+
+  <xacro:materials name="fl_shank" color="Grey"/>
+  <xacro:materials name="bl_shank" color="Grey"/>
+  <xacro:materials name="fr_shank" color="Grey"/>
+  <xacro:materials name="br_shank" color="Grey"/>
+
+
+  <!-- For sensors-->
+  <xacro:imu id="1" x="0.0" y="0.0" z="0.005" roll="0.0" pitch="0.0" yaw="0.0" update_rate="100" gnoise="0.005"/>
+  
+</robot>

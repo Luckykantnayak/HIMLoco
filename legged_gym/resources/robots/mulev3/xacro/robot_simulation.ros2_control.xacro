@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <ros2_control name="GazeboSystem" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+
+    <xacro:macro name="mule_joint"
+      params="name joint_min joint_max type max_effort kp_scale kd_scale" 
+    >
+      <joint name="${name}_joint">
+        <command_interface name="position" />
+        <command_interface name="effort" />
+        <command_interface name="velocity" />
+        <command_interface name="kp" />
+        <command_interface name="kd" />
+
+        <state_interface name="position" />
+        <state_interface name="effort" />
+        <state_interface name="velocity" />
+
+        <param name="min">${joint_min}</param>
+        <param name="max">${joint_max}</param>
+        <param name="type">${type}</param>
+        <param name="max_effort">${max_effort}</param>
+        <param name="kp_scale">${kp_scale}</param>
+        <param name="kd_scale">${kd_scale}</param>
+      </joint>
+    </xacro:macro>
+
+    <!-- Front Left -->
+
+    <xacro:mule_joint
+      name="fl_abd"
+      joint_min="-1.5708"
+      joint_max="1.5708"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <xacro:mule_joint
+      name="fl_hip"
+      joint_min="-1.5708"
+      joint_max="3.14159"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <xacro:mule_joint
+      name="fl_knee"
+      joint_min="-3.14159"
+      joint_max="0"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <!-- Front Right -->
+
+    <xacro:mule_joint
+      name="fr_abd"
+      joint_min="-1.5708"
+      joint_max="1.5708"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <xacro:mule_joint
+      name="fr_hip"
+      joint_min="-1.5708"
+      joint_max="3.14159"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <xacro:mule_joint
+      name="fr_knee"
+      joint_min="-3.14159"
+      joint_max="0"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <!-- Back Left -->
+
+    <xacro:mule_joint
+      name="bl_abd"
+      joint_min="-1.5708"
+      joint_max="1.5708"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <xacro:mule_joint
+      name="bl_hip"
+      joint_min="-1.5708"
+      joint_max="3.14159"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <xacro:mule_joint
+      name="bl_knee"
+      joint_min="-3.14159"
+      joint_max="0"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <!-- Back Right -->
+
+    <xacro:mule_joint
+      name="br_abd"
+      joint_min="-1.5708"
+      joint_max="1.5708"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <xacro:mule_joint
+      name="br_hip"
+      joint_min="-1.5708"
+      joint_max="3.14159"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <xacro:mule_joint
+      name="br_knee"
+      joint_min="-3.14159"
+      joint_max="0"
+      type="revolute"
+      max_effort="100"
+      kp_scale="1"
+      kd_scale="1" 
+    />
+
+    <!-- interial measurement unit -->
+
+    <sensor name="imu_sensor">
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+      <state_interface name="angular_velocity.x"/>
+      <state_interface name="angular_velocity.y"/>
+      <state_interface name="angular_velocity.z"/>
+      <state_interface name="linear_acceleration.x"/>
+      <state_interface name="linear_acceleration.y"/>
+      <state_interface name="linear_acceleration.z"/>
+    </sensor>
+  </ros2_control>
+
+
+</robot>

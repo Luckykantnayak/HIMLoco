@@ -33,11 +33,11 @@ from .base_config import BaseConfig
 class LeggedRobotCfg(BaseConfig):
     class env:
         num_envs = 4096
-        num_one_step_observations = 45
+        num_one_step_observations = 57 # 45 --> 12 + 4: 12 Joint positions + 4 torques (for wheels), 12 + 4: 12 Joint vels + 4 (zero values for wheels), 12 + 4 previous actions, 3 + 3 + 3: Gravity vector + vel commands + body angular vel 
         num_observations = num_one_step_observations * 6
-        num_one_step_privileged_obs = 45 + 3 + 3 + 187 # additional: base_lin_vel, external_forces, scan_dots
+        num_one_step_privileged_obs = num_one_step_observations + 3 + 3 + 187 # additional: base_lin_vel, external_forces, scan_dots
         num_privileged_obs = num_one_step_privileged_obs * 1 # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise 
-        num_actions = 12
+        num_actions = 16 # 12 --> 4 additional actions for wheels
         env_spacing = 3.  # not used with heightfields/trimeshes 
         send_timeouts = True # send time out information to the algorithm
         episode_length_s = 20 # episode length in seconds
@@ -75,7 +75,7 @@ class LeggedRobotCfg(BaseConfig):
         heading_command = True # if true: compute ang vel command from heading error
         class ranges:
             lin_vel_x = [-1.0, 1.0] # min max [m/s]
-            lin_vel_y = [-1.0, 1.0]   # min max [m/s]
+            lin_vel_y = [0.0, 0.0]   # min max [m/s]
             ang_vel_yaw = [-3.14, 3.14]    # min max [rad/s]
             heading = [-3.14, 3.14]
 
@@ -253,7 +253,7 @@ class LeggedRobotCfgPPO(BaseConfig):
         entropy_coef = 0.01
         num_learning_epochs = 5
         num_mini_batches = 4 # mini batch size = num_envs*nsteps / nminibatches
-        learning_rate = 1.e-3 #5.e-4
+        learning_rate = 1.e-3 # 5.e-4
         schedule = 'adaptive' # could be adaptive, fixed
         gamma = 0.99
         lam = 0.95
@@ -264,7 +264,7 @@ class LeggedRobotCfgPPO(BaseConfig):
         policy_class_name = 'HIMActorCritic'
         algorithm_class_name = 'HIMPPO'
         num_steps_per_env = 100 # per iteration
-        max_iterations = 200000 # number of policy updates
+        max_iterations = 4000 # number of policy updates
 
         # logging
         save_interval = 20 # check for potential saves every this many iterations

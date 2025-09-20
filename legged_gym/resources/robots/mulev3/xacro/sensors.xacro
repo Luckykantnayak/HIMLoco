@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:macro name="imu" params="id x y z roll pitch yaw update_rate gnoise">
+
+        <link name="imu_link_${id}">
+            <inertial>
+                <mass value="0.001"/>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <inertia ixx="1e-09" ixy="0.0" ixz="0.0" iyy="1e-09" iyz="0.0" izz="1e-09"/>
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.005 0.005 0.005" />
+                </geometry>
+                <material name="">
+                    <color rgba="0.6 0.8 0.1 1" />
+                </material>
+            </visual>
+        </link>
+
+        <joint name="imu_joint_${id}" type="fixed">
+            <parent link="base_link"/>
+            <child link="imu_link_${id}"/>
+            <origin xyz="${x} ${y} ${z}" rpy="${roll} ${pitch} ${yaw}"/>
+        </joint>
+
+        <gazebo reference="imu_link_${id}">
+            <gravity>true</gravity>
+            <sensor name="imu_sensor" type="imu">
+            <always_on>true</always_on>
+            <update_rate>100</update_rate>
+            <visualize>true</visualize>
+            <topic>imu</topic>
+            <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                <topicName>imu</topicName>
+                <bodyName>imu_link_${id}</bodyName>
+                <updateRateHZ>10.0</updateRateHZ>
+                <gaussianNoise>0.0</gaussianNoise>
+                <xyzOffset>0 0 0</xyzOffset>
+                <rpyOffset>0 0 0</rpyOffset>
+                <frameName>imu_link</frameName>
+                <initialOrientationAsReference>false</initialOrientationAsReference>
+                <ros>
+                    <remapping>/imu_plugin/out:=imu</remapping>
+                </ros>
+                <output_type>sensor_msgs/Imu</output_type>
+                <frame_name>imu_link</frame_name>
+            </plugin>
+            <pose>0 0 0 0 0 0</pose>
+            </sensor>
+        </gazebo>
+
+    </xacro:macro>
+
+    <!-- Contact Sensor Plugins
+    <xacro:macro name="contact_sensor" params="leg_name update_rate">
+        <gazebo reference="${leg_name}_shank_link">
+            <sensor name="${leg_name}_link_contact_sensor" type="contact">
+                <always_on>true</always_on>
+                <update_rate>${update_rate}</update_rate>
+                <contact>
+                    <collision>${leg_name}_shank_link_collision</collision>
+                </contact>
+                <plugin name="gazebo_ros_bumper_controller" filename="libgazebo_ros_bumper.so">
+                    <bumperTopicName>${leg_name}_contact</bumperTopicName>
+                    <frameName>${leg_name}_shank_link</frameName>
+                </plugin>
+            </sensor>
+        </gazebo>
+    </xacro:macro> -->
+
+
+
+    <!-- Force Torque sensor -->
+
+    <!-- <xacro:macro name="imu" params="id x y z roll pitch yaw update_rate gnoise">
+
+        <link name="imu_link_${id}">
+            <inertial>
+                <mass value="0.001"/>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <inertia ixx="1e-09" ixy="0.0" ixz="0.0" iyy="1e-09" iyz="0.0" izz="1e-09"/>
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.005 0.005 0.005" />
+                </geometry>
+                <material name="">
+                    <color rgba="0.6 0.8 0.1 1" />
+                </material>
+            </visual>
+        </link>
+
+        <joint name="imu_joint_${id}" type="fixed">
+            <parent link="base_link"/>
+            <child link="imu_link_${id}"/>
+            <origin xyz="${x} ${y} ${z}" rpy="${roll} ${pitch} ${yaw}"/>
+        </joint>
+
+        <gazebo reference="imu_link_${id}">
+            <gravity>true</gravity>
+            <sensor name="imu_sensor" type="imu">
+            <always_on>true</always_on>
+            <update_rate>100</update_rate>
+            <visualize>true</visualize>
+            <topic>imu</topic>
+            <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                <topicName>imu</topicName>
+                <bodyName>imu_link_${id}</bodyName>
+                <updateRateHZ>10.0</updateRateHZ>
+                <gaussianNoise>0.0</gaussianNoise>
+                <xyzOffset>0 0 0</xyzOffset>
+                <rpyOffset>0 0 0</rpyOffset>
+                <frameName>imu_link</frameName>
+                <initialOrientationAsReference>false</initialOrientationAsReference>
+                <ros>
+                    <remapping>/imu_plugin/out:=imu</remapping>
+                </ros>
+                <output_type>sensor_msgs/Imu</output_type>
+                <frame_name>imu_link</frame_name>
+            </plugin>
+            <pose>0 0 0 0 0 0</pose>
+            </sensor>
+        </gazebo>
+
+    </xacro:macro> -->
+
+</robot>

@@ -102,6 +102,7 @@ def parse_sim_params(args, cfg):
     return sim_params
 
 def get_load_path(root, load_run=-1, checkpoint=-1):
+    print("PATH FOLDER:,", root)
     try:
         runs = os.listdir(root)
         #TODO sort by date to handle change of month

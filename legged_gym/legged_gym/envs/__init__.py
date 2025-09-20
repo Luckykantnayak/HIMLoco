@@ -34,7 +34,10 @@ from .base.legged_robot import LeggedRobot
 from .a1.a1_config import A1RoughCfg, A1RoughCfgPPO
 from legged_gym.envs.go1.go1_config import Go1RoughCfg, Go1RoughCfgPPO
 from legged_gym.envs.aliengo.aliengo_config import AlienGoRoughCfg, AlienGoRoughCfgPPO
-from legged_gym.envs.go2w.go2w_config import Go2wRoughCfg, Go2wRoughCfgPPO
+from legged_gym.envs.go2w.go2w_config_skate import Go2wSkateRoughCfg, Go2wSkateRoughCfgPPO
+from legged_gym.envs.go2w.go2w_config_roll import Go2wRollRoughCfg, Go2wRollRoughCfgPPO
+from legged_gym.envs.go2w.go2w_config_walk import Go2wWalkRoughCfg, Go2wWalkRoughCfgPPO
+
 from legged_gym.envs.b2w.b2w_config import B2wRoughCfg, B2wRoughCfgPPO
 
 import os
@@ -44,6 +47,8 @@ from legged_gym.utils.task_registry import task_registry
 task_registry.register( "a1", LeggedRobot, A1RoughCfg(), A1RoughCfgPPO() )
 task_registry.register( "go1", LeggedRobot, Go1RoughCfg(), Go1RoughCfgPPO() )
 task_registry.register( "aliengo", LeggedRobot, AlienGoRoughCfg(), AlienGoRoughCfgPPO() )
-task_registry.register( "go2w", LeggedRobot, Go2wRoughCfg(), Go2wRoughCfgPPO() )
+task_registry.register( "go2w-skate", LeggedRobot, Go2wSkateRoughCfg(), Go2wSkateRoughCfgPPO() )
+task_registry.register( "go2w-roll", LeggedRobot, Go2wRollRoughCfg(), Go2wRollRoughCfgPPO() )
+task_registry.register( "go2w-walk", LeggedRobot, Go2wWalkRoughCfg(), Go2wWalkRoughCfgPPO() )
 task_registry.register( "b2w", LeggedRobot, B2wRoughCfg(), B2wRoughCfgPPO() )
 

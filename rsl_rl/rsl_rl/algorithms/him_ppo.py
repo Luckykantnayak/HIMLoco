@@ -90,6 +90,7 @@ class HIMPPO:
     def act(self, obs, critic_obs):
         # Compute the actions and values
         self.transition.actions = self.actor_critic.act(obs).detach()
+        # print(self.transition.actions.shape)
         self.transition.values = self.actor_critic.evaluate(critic_obs).detach()
         self.transition.actions_log_prob = self.actor_critic.get_actions_log_prob(self.transition.actions).detach()
         self.transition.action_mean = self.actor_critic.action_mean.detach()

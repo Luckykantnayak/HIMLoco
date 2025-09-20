@@ -30,7 +30,7 @@
 
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
-class Go2wRoughCfg( LeggedRobotCfg ):
+class Go2wWalkRoughCfg( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.45] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
@@ -75,10 +75,20 @@ class Go2wRoughCfg( LeggedRobotCfg ):
             # 'RR_foot_joint':0.0,
         }
 
+    class env( LeggedRobotCfg.env ):
+        num_envs = 4096
+        num_one_step_observations = 57 # 45 --> 12 + 4: 12 Joint positions + 4 torques (for wheels), 12 + 4: 12 Joint vels + 4 (zero values for wheels), 12 + 4 previous actions, 3 + 3 + 3: Gravity vector + vel commands + body angular vel
+        num_observations = num_one_step_observations * 6
+        num_one_step_privileged_obs = num_one_step_observations + 3 + 3 + 187 # additional: base_lin_vel, external_forces, scan_dots
+        num_privileged_obs = num_one_step_privileged_obs * 1 # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
+        num_actions = 16 # 12 --> 4 additional actions for wheels
+        num_actuated_actions = 16
+
+
     class control( LeggedRobotCfg.control ):
         # PD Drive parameters:
         control_type = 'P'
-        wheel_control_type = 'skate'
+        wheel_control_type = 'walk'
         stiffness = {'hip_joint': 40.0, 'thigh_joint': 40.0, 'calf_joint': 40.0, 'foot_joint': 20.}  # [N*m/rad]
         damping = {'hip_joint': 1.0, 'thigh_joint': 1.0, 'calf_joint': 1.0, 'foot_joint': 0.5}     # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
@@ -145,7 +155,7 @@ class Go2wRoughCfg( LeggedRobotCfg ):
         max_contact_force = 100. # forces above this value are penalized
         clearance_height_target = -0.2
 
-class Go2wRoughCfgPPO( LeggedRobotCfgPPO ):
+class Go2wWalkRoughCfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01
     class runner( LeggedRobotCfgPPO.runner ):

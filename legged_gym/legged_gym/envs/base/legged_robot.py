@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
+import copy
 
 from legged_gym import LEGGED_GYM_ROOT_DIR, envs
 from time import time
@@ -70,8 +71,10 @@ class LeggedRobot(BaseTask):
         self._parse_cfg(self.cfg)
         super().__init__(self.cfg, sim_params, physics_engine, sim_device, headless)
         self.num_one_step_obs = self.cfg.env.num_one_step_observations
+        self.num_actuated_actions = self.cfg.env.num_actuated_actions
         self.num_one_step_privileged_obs = self.cfg.env.num_one_step_privileged_obs
         self.history_length = int(self.num_obs / self.num_one_step_obs)
+
 
         if not self.headless:
             self.set_camera(self.cfg.viewer.pos, self.cfg.viewer.lookat)
@@ -86,7 +89,15 @@ class LeggedRobot(BaseTask):
             actions (torch.Tensor): Tensor of shape (num_envs, num_actions_per_env)
         """
         clip_actions = self.cfg.normalization.clip_actions
-        self.actions = torch.clip(actions, -clip_actions, clip_actions).to(self.device)
+        clipped_actions = torch.clip(actions, -clip_actions, clip_actions).to(self.device)
+
+        if self.cfg.env.num_actuated_actions == 12:
+            self.actions = torch.zeros((clipped_actions.shape[0], 16), device=self.device)
+            joint_indices = [i for i in range(16) if i not in self.wheel_indices]
+            self.actions[:, joint_indices] = clipped_actions
+
+        else:
+            self.actions = clipped_actions
 
         self.delayed_actions = self.actions.clone().view(self.num_envs, 1, self.num_actions).repeat(1, self.cfg.control.decimation, 1)
         delay_steps = torch.randint(0, self.cfg.control.decimation, (self.num_envs, 1), device=self.device)
@@ -511,6 +522,17 @@ class LeggedRobot(BaseTask):
         self.dof_vel[:, self.wheel_indices] =  0.0
         actions_scaled = actions * self.cfg.control.action_scale
         control_type = self.cfg.control.control_type
+
+        # wheel_indices = [3, 7, 11, 15]
+        # if self.cfg.control.wheel_control_type == "skate":
+        #     if actions_scaled.shape[1] == 16:
+        #         actions_scaled[: wheel_indices] = 0.0
+        #
+        #     elif actions_scaled.shape[1] == 12:
+        #         act_16_dim = torch.zeros((actions_scaled.shape[0], 16), device=self.device)
+        #         joint_indices = [i for i in range(16) if i not in wheel_indices]
+        #         act_16_dim[:, joint_indices] = actions_scaled
+        #         actions_scaled = copy.deepcopy(act_16_dim)
         
         if control_type=="P":
             torques = self.p_gains * (actions_scaled + dof_err) - self.d_gains * self.dof_vel

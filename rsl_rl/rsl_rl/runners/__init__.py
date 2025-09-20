@@ -30,3 +30,4 @@
 
 from .on_policy_runner import OnPolicyRunner
 from .him_on_policy_runner import HIMOnPolicyRunner
+from .him_skate_on_policy_runner import HIMSkateOnPolicyRunner

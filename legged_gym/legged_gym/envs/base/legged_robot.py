@@ -91,10 +91,14 @@ class LeggedRobot(BaseTask):
         clip_actions = self.cfg.normalization.clip_actions
         clipped_actions = torch.clip(actions, -clip_actions, clip_actions).to(self.device)
 
-        if self.cfg.env.num_actuated_actions == 12:
-            self.actions = torch.zeros((clipped_actions.shape[0], 16), device=self.device)
-            joint_indices = [i for i in range(16) if i not in self.wheel_indices]
-            self.actions[:, joint_indices] = clipped_actions
+        if self.cfg.control.wheel_control_type == "skate":
+            if self.cfg.env.num_actuated_actions == 12:
+                self.actions = torch.zeros((clipped_actions.shape[0], 16), device=self.device)
+                joint_indices = [i for i in range(16) if i not in self.wheel_indices]
+                self.actions[:, joint_indices] = clipped_actions
+
+            else:
+                self.actions = clipped_actions
 
         else:
             self.actions = clipped_actions

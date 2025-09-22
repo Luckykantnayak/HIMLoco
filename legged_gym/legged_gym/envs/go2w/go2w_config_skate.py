@@ -90,8 +90,8 @@ class Go2wSkateRoughCfg( LeggedRobotCfg ):
         # PD Drive parameters:
         control_type = 'P'
         wheel_control_type = 'skate'
-        stiffness = {'hip_joint': 40.0, 'thigh_joint': 40.0, 'calf_joint': 40.0, 'foot_joint': 20.}  # [N*m/rad]
-        damping = {'hip_joint': 1.0, 'thigh_joint': 1.0, 'calf_joint': 1.0, 'foot_joint': 0.5}     # [N*m*s/rad]
+        stiffness = {'hip_joint': 40.0, 'thigh_joint': 40.0, 'calf_joint': 40.0, 'foot_joint': 0.5}  # [N*m/rad]
+        damping = {'hip_joint': 1.0, 'thigh_joint': 1.0, 'calf_joint': 1.0, 'foot_joint': 0.01}     # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
@@ -105,7 +105,7 @@ class Go2wSkateRoughCfg( LeggedRobotCfg ):
             resampling_time = 10. # time before command are changed[s]
             heading_command = True # if true: compute ang vel command from heading error
             class ranges( LeggedRobotCfg.commands.ranges):
-                lin_vel_x = [-1.0, 1.0] # min max [m/s]
+                lin_vel_x = [-2.0, 2.0] # min max [m/s]
                 lin_vel_y = [0.0, 0.0]   # min max [m/s]
                 ang_vel_yaw = [-3.14, 3.14]    # min max [rad/s]
                 heading = [-3.14, 3.14]
@@ -139,7 +139,7 @@ class Go2wSkateRoughCfg( LeggedRobotCfg ):
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.
-            torques = -0.000001
+            torques = 0.0  # -0.000001
             dof_vel = -0.0
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0

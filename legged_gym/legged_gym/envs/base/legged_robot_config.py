@@ -50,8 +50,8 @@ class LeggedRobotCfg(BaseConfig):
         vertical_scale = 0.005 # [m]
         border_size = 25 # [m]
         curriculum = True
-        static_friction = 1.0
-        dynamic_friction = 1.0
+        static_friction = 0.5  #1.0
+        dynamic_friction = 0.5  # 1.0
         restitution = 0.
         # rough terrain only:
         measure_heights = True
@@ -65,8 +65,8 @@ class LeggedRobotCfg(BaseConfig):
         num_rows= 10 # number of terrain rows (levels)
         num_cols = 20 # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
-        # terrain_proportions = [0.1, 0.2, 0.3, 0.3, 0.1]
-        terrain_proportions = [1., 0., 0., 0., 0.]
+        terrain_proportions = [0.1, 0.2, 0.3, 0.3, 0.1]
+        # terrain_proportions = [1., 0., 0., 0., 0.]
 
         # trimesh only:
         slope_treshold = 0.75 # slopes above this threshold will be corrected to vertical surfaces
@@ -138,6 +138,7 @@ class LeggedRobotCfg(BaseConfig):
         
         randomize_friction = True
         friction_range = [0.2, 1.25]
+        # friction_range = [0.0, 0.0]
         
         randomize_restitution = False
         restitution_range = [0., 1.0]
@@ -181,6 +182,7 @@ class LeggedRobotCfg(BaseConfig):
             feet_stumble = -0.0 
             action_rate = -0.01
             stand_still = -0.
+            smooth_skating = 0.
 
         only_positive_rewards = True # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)

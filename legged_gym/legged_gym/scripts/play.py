@@ -48,7 +48,7 @@ def play(args, x_vel=1.0, y_vel=0.0, yaw_vel=0.0):
     env_cfg.terrain.curriculum = True
     env_cfg.terrain.max_init_terrain_level = 9
     env_cfg.noise.add_noise = False
-    env_cfg.domain_rand.randomize_friction = False
+    env_cfg.domain_rand.randomize_friction = True  # False
     env_cfg.domain_rand.push_robots = False
     env_cfg.domain_rand.disturbance = False
     env_cfg.domain_rand.randomize_payload_mass = False
@@ -132,4 +132,4 @@ if __name__ == '__main__':
     RECORD_FRAMES = False
     MOVE_CAMERA = False
     args = get_args()
-    play(args, x_vel=1.0, y_vel=0.0, yaw_vel=0.0)
+    play(args, x_vel=0.5, y_vel=0.0, yaw_vel=0.)

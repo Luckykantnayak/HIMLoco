@@ -75,6 +75,9 @@ class Go2wSkateRoughCfg( LeggedRobotCfg ):
             # 'RR_foot_joint':0.0,
         }
 
+    class terrain( LeggedRobotCfg.terrain ):
+        mesh_type = 'plane' # "heightfield" # none, plane, heightfield or trimesh
+
 
     class env( LeggedRobotCfg.env ):
         num_envs = 4096
@@ -130,12 +133,12 @@ class Go2wSkateRoughCfg( LeggedRobotCfg ):
             ang_vel_xy = -0.05
             orientation = -0.2
             dof_acc = -2.5e-7
-            joint_power = -2e-5
-            base_height = -1.0
+            joint_power = -3e-4  # -2e-5
+            base_height = -2.0  # -1.0
             foot_clearance = 0.0
-            action_rate = -0.01
-            smoothness = -0.01
-            feet_air_time =  0.0
+            action_rate = -0.01  # -0.02 #-0.01
+            smoothness = -0.01  # -0.02 # -0.01
+            feet_air_time = -2.0  # -3.0 # -1.0  0.0
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.
@@ -144,7 +147,8 @@ class Go2wSkateRoughCfg( LeggedRobotCfg ):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
-            hip_action_l2 = -0.1
+            hip_action_l2 = -0.02
+            smooth_skating = 0.025  # 0.05
 
 
         only_positive_rewards = False # if true negative total rewards are clipped at zero (avoids early termination problems)

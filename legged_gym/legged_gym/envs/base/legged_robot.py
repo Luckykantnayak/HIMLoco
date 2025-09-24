@@ -145,6 +145,7 @@ class LeggedRobot(BaseTask):
         self.projected_gravity[:] = quat_rotate_inverse(self.base_quat, self.gravity_vec)
         
         self.feet_pos = self.rigid_body_states.view(self.num_envs, self.num_bodies, 13)[:, self.feet_indices, 0:3]
+        self.prev_footpos= torch.zeros_like(self.feet_pos, device=self.device)
         self.feet_vel = self.rigid_body_states.view(self.num_envs, self.num_bodies, 13)[:, self.feet_indices, 7:10]
 
         self._post_physics_step_callback()
@@ -205,6 +206,7 @@ class LeggedRobot(BaseTask):
         self.last_actions[env_ids] = 0.
         self.last_last_actions[env_ids] = 0.
         self.last_dof_vel[env_ids] = 0.
+        self.prev_footpos[env_ids] = 0.
         self.feet_air_time[env_ids] = 0.
         self.reset_buf[env_ids] = 1
 
@@ -376,6 +378,21 @@ class LeggedRobot(BaseTask):
             for s in range(len(props)):
                 props[s].friction = self.friction_coeffs[env_id]
 
+        # ===============modifying wheel friction===================
+        for s in range(len(props)):
+            # Map shape index to body index
+            body_idx = next(
+                (i for i, idx_range in enumerate(self.shape_to_body_map)
+                 if idx_range.start <= s < idx_range.start + idx_range.count), None
+            )
+
+            if body_idx is not None:
+                body_name = self.body_names[body_idx]
+                if "foot" in body_name.lower():
+                    # skating friction using torch
+                    props[s].friction = torch.rand(1, device=self.device) * 0.19 + 0.01  # [0.01, 0.2]
+        # ===============modifying wheel friction===================
+
         if self.cfg.domain_rand.randomize_restitution:
             if env_id==0:
                 # prepare restitution randomization
@@ -384,6 +401,7 @@ class LeggedRobot(BaseTask):
 
             for s in range(len(props)):
                 props[s].restitution = self.restitution_coeffs[env_id]
+
 
         return props
     
@@ -690,6 +708,7 @@ class LeggedRobot(BaseTask):
         self.dof_vel = self.dof_state.view(self.num_envs, self.num_dof, 2)[..., 1]
         self.base_quat = self.root_states[:, 3:7]
         self.feet_pos = self.rigid_body_states.view(self.num_envs, self.num_bodies, 13)[:, self.feet_indices, 0:3]
+        self.prev_footpos = torch.zeros_like(self.feet_pos, device=self.device)
         self.feet_vel = self.rigid_body_states.view(self.num_envs, self.num_bodies, 13)[:, self.feet_indices, 7:10]
 
         self.contact_forces = gymtorch.wrap_tensor(net_contact_forces).view(self.num_envs, -1, 3) # shape: num_envs, num_bodies, xyz axis
@@ -870,6 +889,9 @@ class LeggedRobot(BaseTask):
 
         # save body names from the asset
         body_names = self.gym.get_asset_rigid_body_names(robot_asset)
+        self.body_names = body_names
+        self.shape_to_body_map = self.gym.get_asset_rigid_body_shape_indices(robot_asset)
+
         self.dof_names = self.gym.get_asset_dof_names(robot_asset)
         self.num_bodies = len(body_names)
         self.num_dofs = len(self.dof_names)
@@ -1191,11 +1213,28 @@ class LeggedRobot(BaseTask):
     
     def _reward_dof_acc(self):
         # Penalize dof accelerations
-        return torch.sum(torch.square((self.last_dof_vel - self.dof_vel) / self.dt), dim=1)
+        joint_indices = [i for i in range(self.num_dofs) if i not in self.wheel_indices]
+        joint_acc = torch.sum(torch.square((self.last_dof_vel[:, joint_indices] - self.dof_vel[:, joint_indices]) / self.dt), dim=1)
+        wheel_acc = torch.sum(torch.square((self.last_dof_vel[:, self.wheel_indices] - self.dof_vel[:, self.wheel_indices]) / self.dt), dim=1)
+        joint_scale = 0.9
+        wheel_scale = 1 - joint_scale
+
+        return joint_acc * joint_scale + wheel_acc * wheel_scale
     
     def _reward_joint_power(self):
         #Penalize high power
-        return torch.sum(torch.abs(self.dof_vel) * torch.abs(self.torques), dim=1)
+        x = 0.9
+        leg_joint_indices = [i for i in range(16) if i not in self.wheel_indices]
+        leg_power = torch.sum(torch.abs(self.dof_vel[:, leg_joint_indices]) *
+                              torch.abs(self.torques[:, leg_joint_indices]), dim=1)
+
+        wheel_power = torch.sum(torch.abs(self.dof_vel[:, self.wheel_indices]) *
+                                torch.abs(self.torques[:, self.wheel_indices]), dim=1)
+
+        rew_joint_power = x * leg_power + (1.0 - x) * wheel_power
+
+        # return torch.sum(torch.abs(self.dof_vel) * torch.abs(self.torques), dim=1)
+        return rew_joint_power
 
     def _reward_base_height(self):
         # Penalize base height away from target
@@ -1262,7 +1301,9 @@ class LeggedRobot(BaseTask):
         self.last_contacts = contact
         first_contact = (self.feet_air_time > 0.) * contact_filt
         self.feet_air_time += self.dt
-        rew_airTime = torch.sum((self.feet_air_time - 0.5) * first_contact, dim=1) # reward only on first contact with the ground
+        # rew_airTime = torch.sum((self.feet_air_time - 0.5) * first_contact, dim=1) # reward only on first contact with the ground
+        rew_airTime = torch.sum((self.feet_air_time) * first_contact, dim=1) # reward only on first contact with the ground
+
         rew_airTime *= torch.norm(self.commands[:, :2], dim=1) > 0.1 #no reward for zero command
         self.feet_air_time *= ~contact_filt
         return rew_airTime
@@ -1284,3 +1325,31 @@ class LeggedRobot(BaseTask):
         action_l2 = torch.sum(self.actions[:, [0, 4, 8, 12]] ** 2, dim=1)
         #self.episode_metric_sums['leg_action_l2'] += action_l2
         return action_l2
+
+    def _reward_smooth_skating(self):
+        # alpha = 0.8
+        max_slide_coeff = 20.0
+        cur_footpos_translated = self.feet_pos - self.root_states[:, 0:3].unsqueeze(1)
+        footpos_in_body_frame = torch.zeros(self.num_envs, len(self.feet_indices), 3, device=self.device)
+        for i in range(len(self.feet_indices)):
+            footpos_in_body_frame[:, i, :] = quat_rotate_inverse(self.base_quat, cur_footpos_translated[:, i, :])
+
+        foot_disp_body = footpos_in_body_frame - self.prev_footpos  # shape: [num_envs, num_feet, 3]
+
+        foot_vel_xy_body = torch.norm(foot_disp_body[:, :, :2], dim=2) / self.dt  # [num_envs, num_feet]
+
+        # contact = (self.contact_forces[:, self.feet_indices, 2] > 0.1).float()
+        contact_force = self.contact_forces[:, self.feet_indices, 2].clamp(min=0.0, max=50.0)
+        normalized_contact = contact_force / 50.0  # scale to [0, 1]
+
+        # rew_slide = torch.sum(foot_vel_xy_body * contact, dim=1) / max_slide_coeff
+        rew_slide = torch.sum(foot_vel_xy_body * normalized_contact, dim=1) / max_slide_coeff
+
+
+        # airtime_penalty = torch.mean(1.0 - (normalized_contact > 0.1).float(), dim=1)
+
+        reward = rew_slide
+
+        self.prev_footpos = footpos_in_body_frame
+
+        return reward

@@ -492,20 +492,7 @@ class LeggedRobot(BaseTask):
             [torch.Tensor]: Torques sent to the simulation
         """
         #pd controller
-        # # self.dof_vel[:, self.wheel_indices] = 0.0
-        # # self.dof_pos[:, self.wheel_indices] = 0.0
-        # actions_scaled = actions * self.cfg.control.action_scale
-        # # actions_scaled[:, [0, 3, 6, 9]] *=self.cfg.control.hip_reduction
-        # self.joint_pos_target = self.default_dof_pos + actions_scaled
-
-        # control_type = self.cfg.control.control_type
-        # if control_type=="P":
-        #     torques = self.p_gains * self.Kp_factors * (self.joint_pos_target - self.dof_pos) - self.d_gains * self.Kd_factors * self.dof_vel
-        #     torques[:, self.wheel_indices] = 0.0
-        #     desired_wheel_vel = actions_scaled[:, self.wheel_indices]   # Output of RL for wheels
-        #     torques[:, self.wheel_indices] = self.p_gains[self.wheel_indices] * (desired_wheel_vel - self.dof_vel[:, self.wheel_indices]) \
-        #                        - self.d_gains[self.wheel_indices] * (self.dof_vel[:, self.wheel_indices] - self.last_dof_vel[:, self.wheel_indices]) / self.sim_params.dt
-
+        
         dof_err = self.default_dof_pos - self.dof_pos
         dof_err[:, self.wheel_indices] =  0
         self.dof_vel[:, self.wheel_indices] =  0.0

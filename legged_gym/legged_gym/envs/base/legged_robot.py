@@ -1245,3 +1245,20 @@ class LeggedRobot(BaseTask):
         action_l2 = torch.sum(self.actions[:, [0, 4, 8, 12]] ** 2, dim=1)
         #self.episode_metric_sums['leg_action_l2'] += action_l2
         return action_l2
+    
+    def _reward_feet_on_ground(self):
+        # encourage all feet to have stable contact
+        contacts = (self.contact_forces[:, self.feet_indices, 2] > 1.0).float()
+        # reward = 1 if all 4 feet in contact
+        return torch.sum(contacts, dim=1)/4  # between 0.0 (no feet) and 1.0 (all feet)
+    
+    def _reward_wheel_contact_velocity(self):
+        contact_mask = (self.contact_forces[:, self.wheel_indices, 2] > 1.0).float()
+        wheel_vels = self.dof_vel[:, self.wheel_indices] 
+        wheel_limits = self.dof_vel_limits[self.wheel_indices]
+
+        # absolute velocity only for wheels in contact
+        contact_vels_l2 = ((wheel_vels / wheel_limits) * contact_mask) ** 2
+
+        # average across all wheels (divide by number of wheels)
+        return torch.sum(contact_vels_l2, dim=1) 

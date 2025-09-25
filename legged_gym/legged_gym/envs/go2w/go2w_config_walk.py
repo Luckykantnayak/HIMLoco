@@ -30,7 +30,7 @@
 
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
-class Go2wRollRoughCfg( LeggedRobotCfg ):
+class Go2wWalkRoughCfg( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.45] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
@@ -88,7 +88,7 @@ class Go2wRollRoughCfg( LeggedRobotCfg ):
     class control( LeggedRobotCfg.control ):
         # PD Drive parameters:
         control_type = 'P'
-        wheel_control_type = 'roll'
+        wheel_control_type = 'walk'
         stiffness = {'hip_joint': 40.0, 'thigh_joint': 40.0, 'calf_joint': 40.0, 'foot_joint': 20.}  # [N*m/rad]
         damping = {'hip_joint': 1.0, 'thigh_joint': 1.0, 'calf_joint': 1.0, 'foot_joint': 0.5}     # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
@@ -131,10 +131,10 @@ class Go2wRollRoughCfg( LeggedRobotCfg ):
             dof_acc = -1e-7 # -2.5e-7
             joint_power = -2e-6 #-2e-5
             base_height = -2. # -1.0
-            foot_clearance = 0.0
+            foot_clearance = 0.1
             action_rate = -0.0025 # -0.01
             smoothness = -0.0025 # -0.01
-            feet_air_time =  -0.1
+            feet_air_time =  0.1
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.
@@ -144,7 +144,8 @@ class Go2wRollRoughCfg( LeggedRobotCfg ):
             dof_vel_limits = -0.0
             torque_limits = -0.0
             hip_action_l2 = -0.005 # -0.1
-            feet_on_ground = 0.5
+            feet_on_ground = 0.0
+            wheel_contact_velocity = -5
 
 
         only_positive_rewards = False # if true negative total rewards are clipped at zero (avoids early termination problems)
@@ -156,11 +157,11 @@ class Go2wRollRoughCfg( LeggedRobotCfg ):
         max_contact_force = 100. # forces above this value are penalized
         clearance_height_target = -0.2
 
-class Go2wRollRoughCfgPPO( LeggedRobotCfgPPO ):
+class Go2wWalkRoughCfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
-        experiment_name = 'rough_go2w_roll'
+        experiment_name = 'rough_go2w_walk'
 
   

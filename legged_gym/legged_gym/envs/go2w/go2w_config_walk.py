@@ -145,9 +145,26 @@ class Go2wWalkRoughCfg( LeggedRobotCfg ):
             torque_limits = -0.0
             hip_action_l2 = -0.005 # -0.1
             feet_on_ground = 0.0
-            wheel_contact_velocity = -5
+            wheel_contact_velocity = -1
+            
+        class scales_curriculum:
+            class wheel_contact_velocity:
+                initial_scale = 0.0
+                final_scale= -1
+                start_step= 2e5
+                end_step= 5e5
+            class feet_air_time:
+                initial_scale = 0.0
+                final_scale= 0.5
+                start_step= 2e5
+                end_step= 5e5
+            class foot_clearance:
+                initial_scale = 0.0
+                final_scale= 0.5
+                start_step= 2e5
+                end_step= 5e5
 
-
+        curriculum = True  # If true a curriculum for reward scale will be implemented
         only_positive_rewards = False # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized

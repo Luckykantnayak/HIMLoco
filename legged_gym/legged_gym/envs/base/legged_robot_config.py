@@ -171,12 +171,32 @@ class LeggedRobotCfg(BaseConfig):
             dof_vel = -0.
             dof_acc = -2.5e-7
             base_height = -0. 
-            feet_air_time =  1.0
+            feet_air_time =  0.0
+            foot_clearance = 0.0
             collision = -1.
             feet_stumble = -0.0 
             action_rate = -0.01
             stand_still = -0.
+            wheel_contact_vel = 0
 
+        class scales_curriculum:
+            class wheel_contact_vel:
+                initial_scale: 0.0
+                final_scale: 0.1
+                start_step: 0
+                end_step: 2e6
+            class feet_air_time:
+                initial_scale: 0.0
+                final_scale: 0.1
+                start_step: 0
+                end_step: 2e6
+            class foot_clearance:
+                initial_scale: 0.0
+                final_scale: 0.1
+                start_step: 0
+                end_step: 2e6
+
+        curriculum = False  # If true a curriculum for reward scale will be implemented
         only_positive_rewards = True # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized

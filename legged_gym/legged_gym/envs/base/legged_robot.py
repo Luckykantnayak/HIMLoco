@@ -136,6 +136,9 @@ class LeggedRobot(BaseTask):
 
         # compute observations, rewards, resets, ...
         self.check_termination()
+        # update curriculum
+        if self.cfg.rewards.curriculum:
+            self._update_reward_curriculum()
         self.compute_reward()
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         termination_privileged_obs = self.compute_termination_observations(env_ids)
@@ -561,6 +564,26 @@ class LeggedRobot(BaseTask):
         disturbance = torch_rand_float(self.cfg.domain_rand.disturbance_range[0], self.cfg.domain_rand.disturbance_range[1], (self.num_envs, 3), device=self.device)
         self.disturbance[:, 0, :] = disturbance
         self.gym.apply_rigid_body_force_tensors(self.sim, forceTensor=gymtorch.unwrap_tensor(self.disturbance), space=gymapi.CoordinateSpace.LOCAL_SPACE)
+    
+    def _update_reward_curriculum(self):
+        for i in range(len(self.reward_functions)):
+            name = self.reward_names[i]
+            if name in self.reward_scales_curriculum:
+                reward_data = self.reward_scales_curriculum[name]
+                initial_scale = reward_data["initial_scale"]
+                final_scale   = reward_data["final_scale"]
+                start_step    = reward_data["start_step"]
+                end_step      = reward_data["end_step"]
+
+                denom = max(1, end_step - start_step)
+                if self.common_step_counter < start_step:
+                    progress = 0.0
+                else:
+                    progress = (self.common_step_counter - start_step) / denom
+                progress = min(1.0, progress)
+
+                self.reward_scales[name] = initial_scale + progress * (final_scale - initial_scale)
+
 
     def _update_terrain_curriculum(self, env_ids):
         """ Implements the game-inspired curriculum.
@@ -941,6 +964,7 @@ class LeggedRobot(BaseTask):
         self.dt = self.cfg.control.decimation * self.sim_params.dt
         self.obs_scales = self.cfg.normalization.obs_scales
         self.reward_scales = class_to_dict(self.cfg.rewards.scales)
+        self.reward_scales_curriculum = class_to_dict(self.cfg.rewards.scales_curriculum)
         self.command_ranges = class_to_dict(self.cfg.commands.ranges)
         if self.cfg.terrain.mesh_type not in ['heightfield', 'trimesh']:
             self.cfg.terrain.curriculum = False

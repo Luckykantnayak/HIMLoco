@@ -72,10 +72,18 @@ class Go2wfRoughCfg( LeggedRobotCfg ):
                 lin_vel_y = [-1.0, 1.0]   # min max [m/s]
                 ang_vel_yaw = [-3.14, 3.14]    # min max [rad/s]
                 heading = [-3.14, 3.14]
-
+    
+    class env( LeggedRobotCfg.env ):
+        num_envs = 4096
+        num_one_step_observations = 57 # 45 --> 12 + 4: 12 Joint positions + 4 torques (for wheels), 12 + 4: 12 Joint vels + 4 (zero values for wheels), 12 + 4 previous actions, 3 + 3 + 3: Gravity vector + vel commands + body angular vel
+        num_observations = num_one_step_observations * 6
+        num_one_step_privileged_obs = num_one_step_observations + 3 + 3 + 187 # additional: base_lin_vel, external_forces, scan_dots
+        num_privileged_obs = num_one_step_privileged_obs * 1 # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
+        num_actions = 12 # 12 --> 4 additional actions for wheels
+        
     class asset( LeggedRobotCfg.asset ):
-        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1/urdf/go1.urdf'
-        name = "go1"
+        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go2wf/urdf/go2wf.urdf'
+        name = "go2wf"
         foot_name = "foot"
         wheel_name = ["foot"]
         penalize_contacts_on = ["thigh", "calf", "base"]
@@ -113,7 +121,7 @@ class Go2wfRoughCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.
         soft_torque_limit = 1.
-        base_height_target = 0.30
+        base_height_target = 0.32
         max_contact_force = 100. # forces above this value are penalized
         clearance_height_target = -0.20
 

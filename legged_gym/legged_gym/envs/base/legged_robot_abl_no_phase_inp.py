@@ -50,7 +50,7 @@ from legged_gym.utils.math import quat_apply_yaw, wrap_to_pi, torch_rand_sqrt_fl
 from legged_gym.utils.helpers import class_to_dict
 from .legged_robot_config import LeggedRobotCfg
 
-class LeggedRobot(BaseTask):
+class LeggedRobotNoPhaseInp(BaseTask):
     def __init__(self, cfg: LeggedRobotCfg, sim_params, physics_engine, sim_device, headless):
         """ Parses the provided config file,
             calls create_sim() (which creates, simulation, terrain and environments),
@@ -302,11 +302,10 @@ class LeggedRobot(BaseTask):
                                     (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions,
-                                    self.foot_indices,
                                     ),dim=-1)
         # add noise if needed
         if self.add_noise:
-            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions + 4)]
+            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions)]
 
         # add perceptive inputs if not blind
         current_obs = torch.cat((current_obs, self.base_lin_vel * self.obs_scales.lin_vel, self.disturbance[:, 0, :]), dim=-1)
@@ -314,6 +313,9 @@ class LeggedRobot(BaseTask):
             heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales.height_measurements 
             heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions+187)]
             current_obs = torch.cat((current_obs, heights), dim=-1)
+            
+        if self.cfg.env.priv_observe_phase:
+            current_obs = torch.cat((current_obs, self.foot_indices), dim=-1)
 
         self.obs_buf = torch.cat((current_obs[:, :self.num_one_step_obs], self.obs_buf[:, :-self.num_one_step_obs]), dim=-1)
         self.privileged_obs_buf = torch.cat((current_obs[:, :self.num_one_step_privileged_obs], self.privileged_obs_buf[:, :-self.num_one_step_privileged_obs]), dim=-1)
@@ -325,11 +327,10 @@ class LeggedRobot(BaseTask):
                                     (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions,
-                                    self.foot_indices
                                     ),dim=-1)
         # add noise if needed
         if self.add_noise:
-            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions + 4)]
+            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions)]
 
         # add perceptive inputs if not blind
         current_obs = torch.cat((current_obs, self.base_lin_vel * self.obs_scales.lin_vel, self.disturbance[:, 0, :]), dim=-1)
@@ -338,6 +339,9 @@ class LeggedRobot(BaseTask):
             heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions+187)]
             current_obs = torch.cat((current_obs, heights), dim=-1)
 
+        if self.cfg.env.priv_observe_phase:
+            current_obs = torch.cat((current_obs, self.foot_indices), dim=-1)
+            
         return current_obs
         
     def compute_termination_observations(self, env_ids):
@@ -349,11 +353,10 @@ class LeggedRobot(BaseTask):
                                     (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions,
-                                    self.foot_indices,
                                     ),dim=-1)
         # add noise if needed
         if self.add_noise:
-            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions + 4)]
+            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions)]
 
         # add perceptive inputs if not blind
         current_obs = torch.cat((current_obs, self.base_lin_vel * self.obs_scales.lin_vel, self.disturbance[:, 0, :]), dim=-1)
@@ -362,6 +365,9 @@ class LeggedRobot(BaseTask):
             heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions+187)]
             current_obs = torch.cat((current_obs, heights), dim=-1)
 
+        if self.cfg.env.priv_observe_phase:
+            current_obs = torch.cat((current_obs, self.foot_indices), dim=-1)
+            
         return torch.cat((current_obs[:, :self.num_one_step_privileged_obs], self.privileged_obs_buf[:, :-self.num_one_step_privileged_obs]), dim=-1)[env_ids]
         
             
@@ -593,7 +599,7 @@ class LeggedRobot(BaseTask):
             raise NameError(f"Unknown controller type: {control_type}")
 
         torques[:, self.wheel_indices] = self.p_gains[self.wheel_indices] * self.Kp_factors * actions_scaled[:, self.wheel_indices]  # torque control for wheels
-        print(actions_scaled[0, self.wheel_indices])
+        # print(actions_scaled[0, self.wheel_indices])
 
         return torch.clip(torques, -self.torque_limits, self.torque_limits)
 
@@ -710,10 +716,10 @@ class LeggedRobot(BaseTask):
         noise_vec[9:(9 + self.num_actions)] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
         noise_vec[(9 + self.num_actions):(9 + 2 * self.num_actions)] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
         noise_vec[(9 + 2 * self.num_actions):(9 + 3 * self.num_actions)] = 0. # previous actions
-        noise_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 4)] = 0. # gait indices
+        # noise_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 4)] = 0. # gait indices
 
         if self.cfg.terrain.measure_heights:
-            noise_vec[(9 + 3 * self.num_actions + 4):(9 + 3 * self.num_actions + 4 + 187)] = noise_scales.height_measurements* noise_level * self.obs_scales.height_measurements
+            noise_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 187)] = noise_scales.height_measurements* noise_level * self.obs_scales.height_measurements
         #noise_vec[232:] = 0
         return noise_vec
 

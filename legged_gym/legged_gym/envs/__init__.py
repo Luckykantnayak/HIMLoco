@@ -32,11 +32,13 @@ from legged_gym import LEGGED_GYM_ROOT_DIR, LEGGED_GYM_ENVS_DIR
 from legged_gym.envs.a1.a1_config import A1RoughCfg, A1RoughCfgPPO
 from .base.legged_robot import LeggedRobot
 from .base.legged_robot_abl_no_phase_inp import LeggedRobotNoPhaseInp
+from .base.legged_robot_single_phase_input import LeggedRobotSinglePhaseInp
 from .a1.a1_config import A1RoughCfg, A1RoughCfgPPO
 from legged_gym.envs.go1.go1_config import Go1RoughCfg, Go1RoughCfgPPO
 from legged_gym.envs.aliengo.aliengo_config import AlienGoRoughCfg, AlienGoRoughCfgPPO
 from legged_gym.envs.go2w.go2w_config import Go2wCfg, Go2wCfgPPO
 from legged_gym.envs.go2w.go2w_config_abl_no_phase import Go2wCfgNoPhaseInp
+from legged_gym.envs.go2w.go2w_config_single_phase_inp import Go2wCfgSinglePhaseInp
 
 
 import os
@@ -48,4 +50,6 @@ task_registry.register( "go1", LeggedRobot, Go1RoughCfg(), Go1RoughCfgPPO() )
 task_registry.register( "aliengo", LeggedRobot, AlienGoRoughCfg(), AlienGoRoughCfgPPO() )
 task_registry.register( "go2w", LeggedRobot, Go2wCfg(), Go2wCfgPPO())
 task_registry.register( "go2w-no-phase", LeggedRobotNoPhaseInp, Go2wCfgNoPhaseInp(), Go2wCfgPPO())
+task_registry.register( "go2w-single-phase", LeggedRobotSinglePhaseInp, Go2wCfgSinglePhaseInp(), Go2wCfgPPO())
+
 

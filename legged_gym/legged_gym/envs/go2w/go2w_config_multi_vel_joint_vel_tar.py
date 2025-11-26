@@ -31,7 +31,7 @@
 
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
-class Go2wCfgMultiVel( LeggedRobotCfg ):
+class Go2wCfgMultiVelJointVel( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.42] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
@@ -64,7 +64,7 @@ class Go2wCfgMultiVel( LeggedRobotCfg ):
         num_actions = 16
 
     class terrain( LeggedRobotCfg.terrain ):
-        mesh_type = "trimesh"
+        mesh_type = "plane"
 
     class control( LeggedRobotCfg.control ):
         # PD Drive parameters:
@@ -132,7 +132,7 @@ class Go2wCfgMultiVel( LeggedRobotCfg ):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
-            trajectory_tracking = -0.7 # -1.2  # -1.
+            trajectory_tracking = -0.3 # -1.2  # -1.
             feet_slip = -0.15
             feet_contact_vel = -0.05
 
@@ -144,6 +144,7 @@ class Go2wCfgMultiVel( LeggedRobotCfg ):
         base_height_target = 0.40
         max_contact_force = 100. # forces above this value are penalized
         clearance_height_target = -0.30
+        traj_tracking_vel = 0.05
 
 class Go2wCfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):
@@ -151,6 +152,6 @@ class Go2wCfgPPO( LeggedRobotCfgPPO ):
     class runner( LeggedRobotCfgPPO.runner ):
         max_iterations = 2000
         run_name = ''
-        experiment_name = 'go2w_ppo'
+        experiment_name = 'go2w-ppo-abl-joint-vels-plane'
 
   

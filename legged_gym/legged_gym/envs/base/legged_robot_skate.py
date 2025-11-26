@@ -86,7 +86,7 @@ class LeggedRobotSkate(BaseTask):
         self._prepare_reward_function()
         self.init_done = True
 
-        ref_traj_path = r"/home/npalghat/projects/research1/ref_traj_tracking/data/skating_gait_reference_v0.6_f2.40.pkl"
+        ref_traj_path = r"/home/npalghat/projects/research1/ref_traj_tracking/data/skating_gait_reference_v0.7_f2.40.pkl"
         self.data = self.load_ref_traj_data(ref_traj_path)
         # gait_indices_traj = []
         # dof_pos_traj = []
@@ -107,6 +107,7 @@ class LeggedRobotSkate(BaseTask):
         
         self.gait_indices_traj = torch.tensor(self.data['phase'], device=self.device)
         self.dof_pos_traj = torch.stack([torch.from_numpy(t[7:]).float() for t in self.data['qpos']]).to(self.device)
+        self.foot_pos_traj = torch.stack([torch.from_numpy(t).float() for t in self.data['feet_world']]).to(self.device) # x and y values are in world frame - ignore
         
     def load_ref_traj_data(self, ref_traj_path: str):
         with open(ref_traj_path, 'rb') as f:
@@ -418,18 +419,18 @@ class LeggedRobotSkate(BaseTask):
                 props[s].friction = self.friction_coeffs[env_id]
 
         # ===============modifying wheel friction===================
-        # for s in range(len(props)):
-        #     # Map shape index to body index
-        #     body_idx = next(
-        #         (i for i, idx_range in enumerate(self.shape_to_body_map)
-        #          if idx_range.start <= s < idx_range.start + idx_range.count), None
-        #     )
+        for s in range(len(props)):
+            # Map shape index to body index
+            body_idx = next(
+                (i for i, idx_range in enumerate(self.shape_to_body_map)
+                 if idx_range.start <= s < idx_range.start + idx_range.count), None
+            )
 
-        #     if body_idx is not None:
-        #         body_name = self.body_names[body_idx]
-        #         if "foot" in body_name.lower():
-        #             # skating friction using torch
-        #             props[s].friction = torch.rand(1, device=self.device) * 0.19 + 0.05  # [0.05, 0.24]
+            if body_idx is not None:
+                body_name = self.body_names[body_idx]
+                if "foot" in body_name.lower():
+                    # skating friction using torch
+                    props[s].friction = torch.rand(1, device=self.device) * 0.19 + 0.05  # [0.05, 0.24]
         # ===============modifying wheel friction===================
 
         if self.cfg.domain_rand.randomize_restitution:
@@ -604,16 +605,19 @@ class LeggedRobotSkate(BaseTask):
 
     def _reset_dofs(self, env_ids):
         """ Resets DOF position and velocities of selected environmments
-        Positions are randomly selected from the reference trajectory data.
+        Positions are randomly selected from 0.5 to 1.5 of range
         Velocities are set to zero.
 
         Args:
             env_ids (List[int]): Environemnt ids
         """
-        indices = torch.randint(0, self.gait_indices_traj.shape[0], (len(env_ids),), device=self.device)
-        self.dof_pos[env_ids][:, self.leg_indices] = self.dof_pos_traj[indices]
-        self.gait_indices[env_ids] = self.gait_indices_traj[indices]
-        # self.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=self.device)
+        # indices = torch.randint(0, self.gait_indices_traj.shape[0], (len(env_ids),), device=self.device)
+        # self.dof_pos[env_ids][:, self.leg_indices] = self.dof_pos_traj[indices]
+        # self.gait_indices[env_ids] = self.gait_indices_traj[indices]
+        
+        self.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=self.device)
+        self.gait_indices[env_ids] = 0.0
+
         self.dof_vel[env_ids] = 0.
 
         env_ids_int32 = env_ids.to(dtype=torch.int32)
@@ -1291,7 +1295,7 @@ class LeggedRobotSkate(BaseTask):
         # print("=================", diff.shape)
         best_idx = torch.argmin(diff, dim=1)
         foot_pos_tar = self.foot_pos_traj[best_idx]  # shape: (num_envs, 4, 3)
-        body_height_ref = self.body_height_traj[best_idx]   # shape: (num_envs)
+        # body_height_ref = self.body_height_traj[best_idx]   # shape: (num_envs)
 
         # cur_footpos_translated = self.feet_pos - self.root_states[:, 0:3].unsqueeze(1)
         # footpos_in_body_frame = torch.zeros(self.num_envs, len(self.wheel_indices), 3, device=self.device)
@@ -1299,7 +1303,7 @@ class LeggedRobotSkate(BaseTask):
         #     footpos_in_body_frame[:, i, :] = quat_rotate_inverse(self.base_quat, cur_footpos_translated[:, i, :])
 
         # desired_z = foot_pos_tar[:, :, 2]  # (num_envs, n_feet)
-        desired_z = foot_pos_tar[:, :, 2] + body_height_ref.unsqueeze(1)
+        desired_z = foot_pos_tar[:, :, 2] + 0.085 # radius of the wheels
 
         # current_z = footpos_in_body_frame[:, :, 2]  # (num_envs, n_feet)
         current_z = self.feet_pos[:, :, 2]  # (num_envs, n_feet)

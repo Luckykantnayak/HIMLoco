@@ -35,20 +35,20 @@ class Go2wCfgSkate( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.42] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
-            'FL_hip_joint': 0.1,  # [rad]
-            'RL_hip_joint': 0.1,  # [rad]
-            'FR_hip_joint': -0.1,  # [rad]
-            'RR_hip_joint': -0.1,  # [rad]
+            'FL_hip_joint': 0.,  # [rad]
+            'RL_hip_joint': 0.,  # [rad]
+            'FR_hip_joint': -0.,  # [rad]
+            'RR_hip_joint': -0.,  # [rad]
 
-            'FL_thigh_joint': 0.8,  # [rad]
-            'RL_thigh_joint': 1.,  # [rad]
-            'FR_thigh_joint': 0.8,  # [rad]
-            'RR_thigh_joint': 1.,  # [rad]
+            'FL_thigh_joint': 0.9,  # [rad]
+            'RL_thigh_joint': 1.2,  # [rad]
+            'FR_thigh_joint': 0.9,  # [rad]
+            'RR_thigh_joint': 1.2,  # [rad]
 
-            'FL_calf_joint': -1.5,  # [rad]
-            'RL_calf_joint': -1.5,  # [rad]
-            'FR_calf_joint': -1.5,  # [rad]
-            'RR_calf_joint': -1.5,  # [rad]
+            'FL_calf_joint': -1.8,  # [rad]
+            'RL_calf_joint': -1.68,  # [rad]
+            'FR_calf_joint': -1.8,  # [rad]
+            'RR_calf_joint': -1.75,  # [rad]
 
             'FL_foot_joint': 0.0,  # [rad]
             'RL_foot_joint': 0.0,  # [rad]
@@ -113,15 +113,15 @@ class Go2wCfgSkate( LeggedRobotCfg ):
     class rewards( LeggedRobotCfg.rewards ):
         class scales:
             termination = -0.0
-            tracking_lin_vel = 1.0
-            tracking_ang_vel = 0.5
+            tracking_lin_vel = 0.5
+            tracking_ang_vel = 0.25
             lin_vel_z = -2.0
             ang_vel_xy = -0.015
             orientation = -0.2
             dof_acc = -3e-8
             joint_power = -5e-6
-            base_height = -1.0
-            foot_clearance = 0.0  # -45  # -30
+            base_height = -10.0 # -1
+            foot_clearance = -45.0  # -45  # -30
             action_rate = -0.003  # -0.01
             smoothness = -0.0015
             feet_air_time =  0.0
@@ -133,7 +133,7 @@ class Go2wCfgSkate( LeggedRobotCfg ):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
-            trajectory_tracking = -0.3 # -1.2  # -1.
+            trajectory_tracking = -0.2 # -1.2  # -1.
             feet_slip = 0.0  # -0.15
             feet_contact_vel = 0.0  # -0.05
 
@@ -142,7 +142,7 @@ class Go2wCfgSkate( LeggedRobotCfg ):
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.
         soft_torque_limit = 1.
-        base_height_target = 0.40
+        base_height_target = 0.36
         max_contact_force = 100. # forces above this value are penalized
         clearance_height_target = -0.30
 

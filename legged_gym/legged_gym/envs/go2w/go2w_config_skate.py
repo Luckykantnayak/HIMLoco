@@ -28,9 +28,10 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
+
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
-class Go2wCfgSinglePhaseInp( LeggedRobotCfg ):
+class Go2wCfgSkate( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.42] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
@@ -61,8 +62,7 @@ class Go2wCfgSinglePhaseInp( LeggedRobotCfg ):
         num_one_step_privileged_obs = num_one_step_observations + 3 + 3 + 187  # additional: base_lin_vel, external_forces, scan_dots
         num_privileged_obs = num_one_step_privileged_obs * 1  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
         num_actions = 16
-        num_actuated_actions = 16
-
+        num_actuated_actions = 12
 
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = "plane"
@@ -80,7 +80,7 @@ class Go2wCfgSinglePhaseInp( LeggedRobotCfg ):
 
     class commands( LeggedRobotCfg.commands ):
             curriculum = True
-            frequency = 3.0
+            frequency = 1.5
             phases = 0.5
             offsets = 0.
             bounds = 0.
@@ -89,7 +89,7 @@ class Go2wCfgSinglePhaseInp( LeggedRobotCfg ):
             resampling_time = 10. # time before command are changed[s]
             heading_command = True # if true: compute ang vel command from heading error
             class ranges( LeggedRobotCfg.commands.ranges):
-                lin_vel_x = [1.0, 1.0] # min max [m/s]
+                lin_vel_x = [0.0, 1.0] # min max [m/s]
                 lin_vel_y = [0.0, 0.0]   # min max [m/s]
                 ang_vel_yaw = [0., 0.]    # min max [rad/s]
                 heading = [0., 0.]
@@ -121,7 +121,7 @@ class Go2wCfgSinglePhaseInp( LeggedRobotCfg ):
             dof_acc = -3e-8
             joint_power = -5e-6
             base_height = -1.0
-            foot_clearance = -45  # -30
+            foot_clearance = 0.0  # -45  # -30
             action_rate = -0.003  # -0.01
             smoothness = -0.0015
             feet_air_time =  0.0
@@ -133,9 +133,9 @@ class Go2wCfgSinglePhaseInp( LeggedRobotCfg ):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
-            trajectory_tracking = -0.7 # -1.2  # -1.
-            feet_slip = -0.15
-            feet_contact_vel = -0.05
+            trajectory_tracking = -0.3 # -1.2  # -1.
+            feet_slip = 0.0  # -0.15
+            feet_contact_vel = 0.0  # -0.05
 
         only_positive_rewards = False # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
@@ -152,6 +152,6 @@ class Go2wCfgPPO( LeggedRobotCfgPPO ):
     class runner( LeggedRobotCfgPPO.runner ):
         max_iterations = 2000
         run_name = ''
-        experiment_name = 'go2w_ppo'
+        experiment_name = 'go2w_ppo_skate'
 
   

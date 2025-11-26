@@ -34,6 +34,9 @@ from .base.legged_robot import LeggedRobot
 from .base.legged_robot_abl_no_phase_inp import LeggedRobotNoPhaseInp
 from .base.legged_robot_single_phase_input import LeggedRobotSinglePhaseInp
 from .base.legged_robot_multi_vel import LeggedRobotMultiVel
+from .base.legged_robot_multi_vel_terrains import LeggedRobotMultiVelTerrains
+from .base.legged_robot_skate import LeggedRobotSkate
+
 from .base.legged_robot_multi_vel_with_joint_vel_reward import LeggedRobotMultiVelJointVel
 from .a1.a1_config import A1RoughCfg, A1RoughCfgPPO
 from legged_gym.envs.go1.go1_config import Go1RoughCfg, Go1RoughCfgPPO
@@ -43,6 +46,8 @@ from legged_gym.envs.go2w.go2w_config_abl_no_phase import Go2wCfgNoPhaseInp
 from legged_gym.envs.go2w.go2w_config_single_phase_inp import Go2wCfgSinglePhaseInp
 from legged_gym.envs.go2w.go2w_config_multi_vel import Go2wCfgMultiVel
 from legged_gym.envs.go2w.go2w_config_multi_vel_joint_vel_tar import Go2wCfgMultiVelJointVel
+from legged_gym.envs.go2w.go2w_config_multi_vel_terrains import Go2wCfgMultiVelTerrains
+from legged_gym.envs.go2w.go2w_config_skate import Go2wCfgSkate
 
 
 import os
@@ -57,6 +62,8 @@ task_registry.register( "go2w-no-phase", LeggedRobotNoPhaseInp, Go2wCfgNoPhaseIn
 task_registry.register( "go2w-single-phase", LeggedRobotSinglePhaseInp, Go2wCfgSinglePhaseInp(), Go2wCfgPPO())
 task_registry.register( "go2w-multi-vel", LeggedRobotMultiVel, Go2wCfgMultiVel(), Go2wCfgPPO())
 task_registry.register( "go2w-multi-vel-joint-vel", LeggedRobotMultiVelJointVel, Go2wCfgMultiVelJointVel(), Go2wCfgPPO())
+task_registry.register( "go2w-multi-vel-terrains", LeggedRobotMultiVelTerrains, Go2wCfgMultiVelTerrains(), Go2wCfgPPO())
+task_registry.register( "go2w-skate", LeggedRobotSkate, Go2wCfgSkate(), Go2wCfgPPO())
 
 
 

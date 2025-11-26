@@ -64,7 +64,7 @@ class HIMOnPolicyRunner:
         actor_critic: HIMActorCritic = actor_critic_class( self.env.num_obs,
                                                         num_critic_obs,
                                                         self.env.num_one_step_obs,
-                                                        self.env.num_actions,
+                                                        self.env.num_actuated_actions,
                                                         **self.policy_cfg).to(self.device)
         alg_class = eval(self.cfg["algorithm_class_name"]) # HIMPPO
         self.alg: HIMPPO = alg_class(actor_critic, device=self.device, **self.alg_cfg)
@@ -72,7 +72,7 @@ class HIMOnPolicyRunner:
         self.save_interval = self.cfg["save_interval"]
 
         # init storage and model
-        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs], [self.env.num_privileged_obs], [self.env.num_actions])
+        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs], [self.env.num_privileged_obs], [self.env.num_actuated_actions])
 
         # Log
         self.log_dir = log_dir

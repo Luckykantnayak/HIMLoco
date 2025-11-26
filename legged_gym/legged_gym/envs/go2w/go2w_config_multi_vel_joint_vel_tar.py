@@ -62,6 +62,8 @@ class Go2wCfgMultiVelJointVel( LeggedRobotCfg ):
         num_one_step_privileged_obs = num_one_step_observations + 3 + 3 + 187  # additional: base_lin_vel, external_forces, scan_dots
         num_privileged_obs = num_one_step_privileged_obs * 1  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
         num_actions = 16
+        num_actuated_actions = 16
+
 
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = "plane"

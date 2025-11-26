@@ -28,6 +28,7 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 import json
+import pickle as pkl
 
 from legged_gym import LEGGED_GYM_ROOT_DIR, envs
 from time import time
@@ -50,7 +51,11 @@ from legged_gym.utils.math import quat_apply_yaw, wrap_to_pi, torch_rand_sqrt_fl
 from legged_gym.utils.helpers import class_to_dict
 from .legged_robot_config import LeggedRobotCfg
 
-class LeggedRobotNoPhaseInp(BaseTask):
+class LeggedRobotSkate(BaseTask):
+    """
+    This experiment is for skating - verifies if reference trajectory containing dynamically not so accuate data can
+    guide the RL to imitate still. Contains task rewards apart from traj tracking.
+    """
     def __init__(self, cfg: LeggedRobotCfg, sim_params, physics_engine, sim_device, headless):
         """ Parses the provided config file,
             calls create_sim() (which creates, simulation, terrain and environments),
@@ -81,50 +86,31 @@ class LeggedRobotNoPhaseInp(BaseTask):
         self._prepare_reward_function()
         self.init_done = True
 
-        ref_traj_path = r"/home/npalghat/projects/research1/ref_traj_gen/wtw/runs/gait-conditioned-agility/2025-11-02/train/go2w_wtw/data/data1.json"
+        ref_traj_path = r"/home/npalghat/projects/research1/ref_traj_tracking/data/skating_gait_reference_v0.6_f2.40.pkl"
         self.data = self.load_ref_traj_data(ref_traj_path)
-        gait_indices_traj = []
-        dof_pos_traj = []
-        dof_vel_traj = []
-        grav_vec_traj = []
-        foot_pos_traj = []
-        foot_vel_traj = []
-        base_ang_vel_traj = []
-        base_lin_vel_traj = []
-        binary_feet_contact_traj = []
-        torques_traj = []
-        body_height_traj = []
+        # gait_indices_traj = []
+        # dof_pos_traj = []
+        # foot_pos_traj = []
+        
+        
 
-        for d in self.data:
-            k, v = list(d.items())[0]
-            gait_indices_traj.append(float(k))
-            dof_pos_traj.append(torch.tensor(v["dof_pos"], device=self.device))
-            dof_vel_traj.append(torch.tensor(v["dof_vel"], device=self.device))
-            grav_vec_traj.append(torch.tensor(v["projected_gravity"], device=self.device))
-            foot_pos_traj.append(torch.tensor(v["foot_positions"], device=self.device))
-            foot_vel_traj.append(torch.tensor(v["foot_velocities"], device=self.device))
-            base_ang_vel_traj.append(torch.tensor(v["base_ang_vel"], device=self.device))
-            base_lin_vel_traj.append(torch.tensor(v["base_lin_vel"], device=self.device))
-            binary_feet_contact_traj.append(torch.tensor(v["binary_feet_contact"], device=self.device))
-            torques_traj.append(torch.tensor(v["torques"], device=self.device))
-            body_height_traj.append(torch.tensor(v["body_height"], device=self.device))
+        # for d in self.data:
+        #     k, v = list(d.items())[0]
+        #     gait_indices_traj.append(float(k))
+        #     dof_pos_traj.append(torch.tensor(v["dof_pos"], device=self.device))
+        #     foot_pos_traj.append(torch.tensor(v["foot_positions"], device=self.device))
 
 
-        self.gait_indices_traj = torch.tensor(gait_indices_traj, device=self.device)
-        self.dof_pos_traj = torch.stack(dof_pos_traj)
-        self.dof_vel_traj = torch.stack(dof_vel_traj)
-        self.grav_vec_traj = torch.stack(grav_vec_traj)
-        self.foot_pos_traj = torch.stack(foot_pos_traj)
-        self.foot_vel_traj = torch.stack(foot_vel_traj)
-        self.base_ang_vel_traj = torch.stack(base_ang_vel_traj)
-        self.base_lin_vel_traj = torch.stack(base_lin_vel_traj)
-        self.binary_feet_contact_traj = torch.stack(binary_feet_contact_traj)
-        self.torques_traj = torch.stack(torques_traj)
-        self.body_height_traj = torch.stack(body_height_traj)
-
+        # self.gait_indices_traj = torch.tensor(gait_indices_traj, device=self.device)
+        # self.dof_pos_traj = torch.stack(dof_pos_traj)
+        # self.foot_pos_traj = torch.stack(foot_pos_traj)
+        
+        self.gait_indices_traj = torch.tensor(self.data['phase'], device=self.device)
+        self.dof_pos_traj = torch.stack([torch.from_numpy(t[7:]).float() for t in self.data['qpos']]).to(self.device)
+        
     def load_ref_traj_data(self, ref_traj_path: str):
-        with open(ref_traj_path, 'r') as f:
-            data = json.load(f)
+        with open(ref_traj_path, 'rb') as f:
+            data = pkl.load(f)
 
         return data
 
@@ -135,7 +121,12 @@ class LeggedRobotNoPhaseInp(BaseTask):
             actions (torch.Tensor): Tensor of shape (num_envs, num_actions_per_env)
         """
         clip_actions = self.cfg.normalization.clip_actions
-        self.actions = torch.clip(actions, -clip_actions, clip_actions).to(self.device)
+        clipped_actions = torch.clip(actions, -clip_actions, clip_actions).to(self.device)
+        
+        # convert a 12D action output to a 16D action output by zeroing wheel actions (torques)
+        self.actions = torch.zeros((clipped_actions.shape[0], 16), device=self.device)
+        joint_indices = [i for i in range(16) if i not in self.wheel_indices]
+        self.actions[:, joint_indices] = clipped_actions
 
         self.delayed_actions = self.actions.clone().view(self.num_envs, 1, self.num_actions).repeat(1, self.cfg.control.decimation, 1)
         delay_steps = torch.randint(0, self.cfg.control.decimation, (self.num_envs, 1), device=self.device)
@@ -234,7 +225,6 @@ class LeggedRobotNoPhaseInp(BaseTask):
         # reset robot states
         self._reset_dofs(env_ids)
         self._reset_root_states(env_ids)
-        self.gait_indices[env_ids] = 0
 
         self._resample_commands(env_ids)
 
@@ -296,84 +286,87 @@ class LeggedRobotNoPhaseInp(BaseTask):
     def compute_observations(self):
         """ Computes observations
         """
+        dof_pos_err = self.dof_pos - self.default_dof_pos
+        dof_pos_err[:, self.wheel_indices] = 0.0
         gait_idx = self.gait_indices.clone()
         gait_idx = gait_idx.unsqueeze(1) # (4000, 1, 1) 
         current_obs = torch.cat((   self.commands[:, :3] * self.commands_scale,
                                     self.base_ang_vel  * self.obs_scales.ang_vel,
                                     self.projected_gravity,
-                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+                                    (dof_pos_err) * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions,
+                                    gait_idx,
                                     ),dim=-1)
         # add noise if needed
         if self.add_noise:
-            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions)]
+            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions + 1)]
 
         # add perceptive inputs if not blind
         current_obs = torch.cat((current_obs, self.base_lin_vel * self.obs_scales.lin_vel, self.disturbance[:, 0, :]), dim=-1)
         if self.cfg.terrain.measure_heights:
             heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales.height_measurements 
-            heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions+187)]
+            heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 187)]
             current_obs = torch.cat((current_obs, heights), dim=-1)
-            
-        if self.cfg.env.priv_observe_phase:
-            current_obs = torch.cat((current_obs, gait_idx), dim=-1)
 
         self.obs_buf = torch.cat((current_obs[:, :self.num_one_step_obs], self.obs_buf[:, :-self.num_one_step_obs]), dim=-1)
         self.privileged_obs_buf = torch.cat((current_obs[:, :self.num_one_step_privileged_obs], self.privileged_obs_buf[:, :-self.num_one_step_privileged_obs]), dim=-1)
 
     def get_current_obs(self):
+        dof_pos_err = self.dof_pos - self.default_dof_pos
+        dof_pos_err[:, self.wheel_indices] = 0.0
         gait_idx = self.gait_indices.clone()
         gait_idx = gait_idx.unsqueeze(1) # (4000, 1, 1) 
+
         current_obs = torch.cat((   self.commands[:, :3] * self.commands_scale,
                                     self.base_ang_vel  * self.obs_scales.ang_vel,
                                     self.projected_gravity,
-                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+                                    (dof_pos_err) * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions,
+                                    gait_idx
                                     ),dim=-1)
         # add noise if needed
         if self.add_noise:
-            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions)]
+            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions + 1)]
 
         # add perceptive inputs if not blind
         current_obs = torch.cat((current_obs, self.base_lin_vel * self.obs_scales.lin_vel, self.disturbance[:, 0, :]), dim=-1)
         if self.cfg.terrain.measure_heights:
             heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales.height_measurements 
-            heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions+187)]
+            heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 187)]
             current_obs = torch.cat((current_obs, heights), dim=-1)
 
-        if self.cfg.env.priv_observe_phase:
-            current_obs = torch.cat((current_obs, gait_idx), dim=-1)
-            
         return current_obs
         
     def compute_termination_observations(self, env_ids):
         """ Computes observations
         """
+        dof_pos_err = self.dof_pos - self.default_dof_pos
+        dof_pos_err[:, self.wheel_indices] = 0.0
         gait_idx = self.gait_indices.clone()
         gait_idx = gait_idx.unsqueeze(1) # (4000, 1, 1) 
+        # print(gait_idx.shape)
+
         current_obs = torch.cat((   self.commands[:, :3] * self.commands_scale,
                                     self.base_ang_vel  * self.obs_scales.ang_vel,
                                     self.projected_gravity,
-                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+                                    (dof_pos_err) * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions,
+                                    gait_idx,
                                     ),dim=-1)
         # add noise if needed
         if self.add_noise:
-            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions)]
+            current_obs += (2 * torch.rand_like(current_obs) - 1) * self.noise_scale_vec[0:(9 + 3 * self.num_actions + 1)]
 
         # add perceptive inputs if not blind
         current_obs = torch.cat((current_obs, self.base_lin_vel * self.obs_scales.lin_vel, self.disturbance[:, 0, :]), dim=-1)
         if self.cfg.terrain.measure_heights:
             heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales.height_measurements 
-            heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions+187)]
+            heights += (2 * torch.rand_like(heights) - 1) * self.noise_scale_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 187)]
             current_obs = torch.cat((current_obs, heights), dim=-1)
 
-        if self.cfg.env.priv_observe_phase:
-            current_obs = torch.cat((current_obs, gait_idx), dim=-1)
-            
         return torch.cat((current_obs[:, :self.num_one_step_privileged_obs], self.privileged_obs_buf[:, :-self.num_one_step_privileged_obs]), dim=-1)[env_ids]
         
             
@@ -425,18 +418,18 @@ class LeggedRobotNoPhaseInp(BaseTask):
                 props[s].friction = self.friction_coeffs[env_id]
 
         # ===============modifying wheel friction===================
-        for s in range(len(props)):
-            # Map shape index to body index
-            body_idx = next(
-                (i for i, idx_range in enumerate(self.shape_to_body_map)
-                 if idx_range.start <= s < idx_range.start + idx_range.count), None
-            )
+        # for s in range(len(props)):
+        #     # Map shape index to body index
+        #     body_idx = next(
+        #         (i for i, idx_range in enumerate(self.shape_to_body_map)
+        #          if idx_range.start <= s < idx_range.start + idx_range.count), None
+        #     )
 
-            if body_idx is not None:
-                body_name = self.body_names[body_idx]
-                if "foot" in body_name.lower():
-                    # skating friction using torch
-                    props[s].friction = torch.rand(1, device=self.device) * 0.19 + 0.05  # [0.05, 0.24]
+        #     if body_idx is not None:
+        #         body_name = self.body_names[body_idx]
+        #         if "foot" in body_name.lower():
+        #             # skating friction using torch
+        #             props[s].friction = torch.rand(1, device=self.device) * 0.19 + 0.05  # [0.05, 0.24]
         # ===============modifying wheel friction===================
 
         if self.cfg.domain_rand.randomize_restitution:
@@ -604,20 +597,23 @@ class LeggedRobotNoPhaseInp(BaseTask):
         else:
             raise NameError(f"Unknown controller type: {control_type}")
 
-        torques[:, self.wheel_indices] = self.p_gains[self.wheel_indices] * self.Kp_factors * actions_scaled[:, self.wheel_indices]  # torque control for wheels
+        torques[:, self.wheel_indices] = 0.0  # torque control for wheels - 0 for skating
         # print(actions_scaled[0, self.wheel_indices])
 
         return torch.clip(torques, -self.torque_limits, self.torque_limits)
 
     def _reset_dofs(self, env_ids):
         """ Resets DOF position and velocities of selected environmments
-        Positions are randomly selected within 0.5:1.5 x default positions.
+        Positions are randomly selected from the reference trajectory data.
         Velocities are set to zero.
 
         Args:
             env_ids (List[int]): Environemnt ids
         """
-        self.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=self.device)
+        indices = torch.randint(0, self.gait_indices_traj.shape[0], (len(env_ids),), device=self.device)
+        self.dof_pos[env_ids][:, self.leg_indices] = self.dof_pos_traj[indices]
+        self.gait_indices[env_ids] = self.gait_indices_traj[indices]
+        # self.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=self.device)
         self.dof_vel[env_ids] = 0.
 
         env_ids_int32 = env_ids.to(dtype=torch.int32)
@@ -722,10 +718,10 @@ class LeggedRobotNoPhaseInp(BaseTask):
         noise_vec[9:(9 + self.num_actions)] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
         noise_vec[(9 + self.num_actions):(9 + 2 * self.num_actions)] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
         noise_vec[(9 + 2 * self.num_actions):(9 + 3 * self.num_actions)] = 0. # previous actions
-        # noise_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 4)] = 0. # gait indices
+        noise_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 1)] = 0. # gait indices
 
         if self.cfg.terrain.measure_heights:
-            noise_vec[(9 + 3 * self.num_actions):(9 + 3 * self.num_actions + 187)] = noise_scales.height_measurements* noise_level * self.obs_scales.height_measurements
+            noise_vec[(9 + 3 * self.num_actions + 1):(9 + 3 * self.num_actions + 1 + 187)] = noise_scales.height_measurements* noise_level * self.obs_scales.height_measurements
         #noise_vec[232:] = 0
         return noise_vec
 
